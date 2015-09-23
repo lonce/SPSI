@@ -1,0 +1,26 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>FFT Test</title>
+		<link rel="stylesheet" type="text/css" href="css/appstyle.css">
+		<script type="text/javascript" data-main="appscripts/main.js" src="jslibs/require.js"></script>
+	</head>
+	
+	<body >
+		<h1>FFT Test</h1>
+		Input Signal<br>
+		<svg class="audioCanvas" id="insigCanvasID"></svg> <br>
+		Spectrogram (magnitude)<br>
+		<canvas id="canvasID"></canvas><br>
+		Inverse FFT reconstruction<br>
+		<svg class="audioCanvas" id="outsigCanvasID"></svg><br>
+		SPSI reconstruction<br>
+		<svg class="audioCanvas" id="spsiCanvasID"></svg> <br>
+
+		<p align="left" id='debugText'> .... </p>
+
+		<button id="testFFTButt" >Test FFT</button>
+		<button id="clearButt" >Clear</button>
+
+	</body>
+</html>
