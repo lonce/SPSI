@@ -25,7 +25,8 @@ require(
 			var frameStartIndex=0;
 			var frameNum=0;
 
-			var stepSize=windowLength/2;
+			var stepsPerFrame = 4;
+			var stepSize=windowLength/stepsPerFrame;
 			
 			var fft = new FFT();
 			fft.init(logN);
@@ -42,6 +43,7 @@ require(
 
 			var numSlices = Math.floor(sig.length/stepSize);
 			var slicePlotWidth=c.width/numSlices; // pixels per slice
+			var spectDisplayShift=(slicePlotWidth*stepsPerFrame-slicePlotWidth)/2; // just used to nicely align display of spectrogram over waveform
 			console.log("canvas width is " + c.width + ", numSlices is " + numSlices + ", and the slicePlotWidth is " + slicePlotWidth);
 			var binPlotHeight= Math.floor(c.height/(windowLength/2+1)); // pixels per bin
 	
@@ -92,11 +94,26 @@ require(
 			}
 
 			// Plot the spectrogram
-			utils.plot(spectrogram, slicePlotWidth, binPlotHeight, maxSectrogramVal, c, slicePlotWidth/2);
+			utils.plot(spectrogram, slicePlotWidth, binPlotHeight, maxSectrogramVal, c, spectDisplayShift);//3*slicePlotWidth/2);
 
 			outputDisplay.show(sig);
 
-			// Now do the SPSI reconstruction!
+			//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+			// Now do the SPSI reconstruction! (Does not use mag spec computed above)
+			SpectrogramInverter.init(logN);
+			frameStartIndex=0;
+			var newseg = new Array(windowLength/4);
+			reconSig.fill(0);
+			while((frameStartIndex+windowLength) <= sig.length) {
+				frame=sig.slice(frameStartIndex, frameStartIndex + windowLength);
+				/*
+				SpectrogramInverter.process(frame, newseg, false);
+				FPP.add_I(reconSig, frameStartIndex, newseg, 0, newseg.length)
+				*/
+				frameNum++;
+				frameStartIndex+= stepSize;
+			}
+			spsiDisplay.show(reconSig);
 		
 			var debugText = document.getElementById('debugText');
 			debugText.innerHTML = "Done";
