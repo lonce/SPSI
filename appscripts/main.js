@@ -99,21 +99,26 @@ require(
 			outputDisplay.show(sig);
 
 			//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-			// Now do the SPSI reconstruction! (Does not use mag spec computed above)
-			SpectrogramInverter.init(logN);
+			// Now do the SPSI reconstruction! 
+			var spsireconSig = new Array(sig.length).fill(0);
+			spsireconSig.fill(0);
+			var phaseAcc= new Array(windowLength/2+1).fill(0);
+			var m_tempRe = new Array(windowLength/2+1);
+			var m_tempIm = new Array(windowLength/2+1);
+
+			frameNum=0;
 			frameStartIndex=0;
-			var newseg = new Array(windowLength/4);
-			reconSig.fill(0);
-			while((frameStartIndex+windowLength) <= sig.length) {
-				frame=sig.slice(frameStartIndex, frameStartIndex + windowLength);
-				/*
-				SpectrogramInverter.process(frame, newseg, false);
-				FPP.add_I(reconSig, frameStartIndex, newseg, 0, newseg.length)
-				*/
+			while(frameNum < spectrogram.length) {
+				SpectrogramInverter.phaseEstimate(spectrogram[frameNum], phaseAcc);
+				FPP.polarToCart( spectrogram[frameNum], phaseAcc, m_tempRe, m_tempIm, windowLength/2 );
+				fft.inverseReal(m_tempRe, m_tempIm, reconFrame);
+				wframe = utils.dotStar(hannWindow, reconFrame);
+				FPP.add_I(spsireconSig, frameStartIndex, reconFrame, 0, windowLength)
+
+				frameStartIndex+=stepSize;
 				frameNum++;
-				frameStartIndex+= stepSize;
 			}
-			spsiDisplay.show(reconSig);
+			spsiDisplay.show(spsireconSig);
 		
 			var debugText = document.getElementById('debugText');
 			debugText.innerHTML = "Done";
