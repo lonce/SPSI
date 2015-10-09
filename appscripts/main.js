@@ -79,7 +79,7 @@ require(
 				fft.inverseReal(specRe, specIm, reconFrame);
 				// window; overlapp add
 				wframe = utils.dotStar(hannWindow, reconFrame);
-				FPP.add_I(reconSig, frameStartIndex, reconFrame, 0, windowLength)
+				FPP.add_I(wframe, 0, reconSig, frameStartIndex, windowLength)
 
 				// ------ log to console -------
 				//utils.arrays2Console(wframe, reconFrame, 0, windowLength, "wFrame  :   reconFrame");
@@ -96,27 +96,28 @@ require(
 			// Plot the spectrogram
 			utils.plot(spectrogram, slicePlotWidth, binPlotHeight, maxSectrogramVal, c, spectDisplayShift);//3*slicePlotWidth/2);
 
-			outputDisplay.show(sig);
+			outputDisplay.show(reconSig);
 
 			//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 			// Now do the SPSI reconstruction! 
 			var spsireconSig = new Array(sig.length).fill(0);
-			spsireconSig.fill(0);
 			var phaseAcc= new Array(windowLength/2+1).fill(0);
-			var m_tempRe = new Array(windowLength/2+1);
-			var m_tempIm = new Array(windowLength/2+1);
+			var m_tempRe = new Array(windowLength/2+1).fill(0);
+			var m_tempIm = new Array(windowLength/2+1).fill(0);
 
 			frameNum=0;
 			frameStartIndex=0;
 			while(frameNum < spectrogram.length) {
 				SpectrogramInverter.phaseEstimate(spectrogram[frameNum], phaseAcc);
 				FPP.polarToCart( spectrogram[frameNum], phaseAcc, m_tempRe, m_tempIm, windowLength/2 );
+
 				fft.inverseReal(m_tempRe, m_tempIm, reconFrame);
 				wframe = utils.dotStar(hannWindow, reconFrame);
-				FPP.add_I(spsireconSig, frameStartIndex, reconFrame, 0, windowLength)
+				FPP.add_I(wframe, 0, spsireconSig, frameStartIndex, windowLength)
 
-				frameStartIndex+=stepSize;
 				frameNum++;
+				frameStartIndex+=stepSize;
+
 			}
 			spsiDisplay.show(spsireconSig);
 		
