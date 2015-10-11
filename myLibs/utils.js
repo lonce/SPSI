@@ -59,15 +59,20 @@ define(
 
 		// Hann window value computed for index
 		utils.hann = function(length, index) {
-  			return 0.5 * (1 - Math.cos(2*Math.PI * index / (length - 1)));
+			var wr=Math.sqrt(length/4)/Math.sqrt(length);
+			var scale = 2*wr/Math.sqrt(1.5); // see Griffin Lim for window scaling
+  			return scale*0.5 * (1 - Math.cos(Math.PI/length+2*Math.PI * index / length));
 		};
 
 		// Hann window returned as an array
 		utils.hannArray = function(length){
 			var hann=[];
+			var area=0;
 			for (var i = 0; i<length;i++){
 				hann[i]=utils.hann(length,i);
+				area+=hann[i];
 			}
+			console.log("Hann window area is " + area);
 			return hann;
 		}
 
