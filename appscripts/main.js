@@ -6,7 +6,7 @@ require(
 
 		var c=document.getElementById("canvasID");
 
-		// Initialize svg canvases for audio wavefor displays
+		// Initialize svg canvases for 3 audio wavefor displays
 		var inputDisplay=audioDisplayFactory("insigCanvasID");
 		var outputDisplay=audioDisplayFactory("outsigCanvasID");
 		var spsiDisplay=audioDisplayFactory("spsiCanvasID");
@@ -37,8 +37,10 @@ require(
 					.concat(utils.makeTone(sr/16, sr, windowLength))
 					.concat(utils.makeTone(sr/4, sr, windowLength)); 
 
+			// Display audio input signal
 			inputDisplay.show(sig);
 
+			// This will hold the signal constructed from just doing the iFFT
 			var reconSig = new Array(sig.length).fill(0);
 
 			var numSlices = Math.floor(sig.length/stepSize);
@@ -47,12 +49,12 @@ require(
 			console.log("canvas width is " + c.width + ", numSlices is " + numSlices + ", and the slicePlotWidth is " + slicePlotWidth);
 			var binPlotHeight= Math.floor(c.height/(windowLength/2+1)); // pixels per bin
 	
-			
+			// frame-length arrays to hold the waveform at various stems
 			var frame = new Array(windowLength);
 			var reconFrame = new Array(windowLength);
 			var wFrame; // a windowed frame 
 
-
+			// Real and Imaginary part of the spectrum
 			var specRe = new Array(windowLength/2+1);
 			var specIm = new Array(windowLength/2+1);
 			
@@ -95,7 +97,7 @@ require(
 
 			// Plot the spectrogram
 			utils.plot(spectrogram, slicePlotWidth, binPlotHeight, maxSectrogramVal, c, spectDisplayShift);//3*slicePlotWidth/2);
-
+			// and the reconstructed audio signal
 			outputDisplay.show(reconSig);
 
 			//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -108,17 +110,22 @@ require(
 			frameNum=0;
 			frameStartIndex=0;
 			while(frameNum < spectrogram.length) {
+				// phaseAcc is used both as input (current phases) and as output (returned phases) at each step
 				SpectrogramInverter.phaseEstimate(spectrogram[frameNum], phaseAcc);
+				//convert (mag, phase) to (re, im)
 				FPP.polarToCart( spectrogram[frameNum], phaseAcc, m_tempRe, m_tempIm, windowLength/2 );
-
+				// invert
 				fft.inverseReal(m_tempRe, m_tempIm, reconFrame);
+				// window
 				wframe = utils.dotStar(hannWindow, reconFrame);
+				// overlap and add
 				FPP.add_I(wframe, 0, spsireconSig, frameStartIndex, windowLength)
 
 				frameNum++;
 				frameStartIndex+=stepSize;
 
 			}
+			// see what it looks like!
 			spsiDisplay.show(spsireconSig);
 		
 			var debugText = document.getElementById('debugText');
