@@ -1,8 +1,8 @@
 
 require(
-	["../myLibs/utils", "../myLibs/SpectrogramInverter", "../myLibs/audioDisplayFactorySVG", "../myLibs/fft"],
+	["../myLibs/utils", "../myLibs/dnd",  "../myLibs/SpectrogramInverter", "../myLibs/audioDisplayFactorySVG", "../myLibs/fft"],
 
-	function (utils, SpectrogramInverter, audioDisplayFactory) {
+	function (utils, dnd, SpectrogramInverter, audioDisplayFactory) {
 
 		var c=document.getElementById("canvasID");
 
@@ -11,17 +11,32 @@ require(
 		var outputDisplay=audioDisplayFactory("outsigCanvasID");
 		var spsiDisplay=audioDisplayFactory("spsiCanvasID");
 
+		//            makeTone(f, sr, len)
+		var sr = 44100;
+		var i;
+		var logN = 8;
+		var windowLength = 1 << logN;
+		var sig=utils.makeTone(sr/32, sr, windowLength)  
+				.concat(utils.makeTone(sr/8, sr, windowLength))
+				.concat(utils.makeTone(sr/16, sr, windowLength))
+				.concat(utils.makeTone(sr/4, sr, windowLength)); 
+
+		// Display audio input signal
+		inputDisplay.show(sig);
+
+		dnd(document.getElementById("inSigDivId"), function(audioBuf){
+			sig=audioBuf.getChannelData(0);
+			inputDisplay.show(sig);
+		});
+
+
 		
 		console.log("Spectrogram canvas width = " + c.width + ", and height = " + c.height);
 
 		// Called on button push
 		function onTestFFT()
 		{
-			var i;
-			var logN = 8;
-			var windowLength = 1 << logN;
 
-			var sr = 44100;
 			var frameStartIndex=0;
 			var frameNum=0;
 
@@ -30,15 +45,8 @@ require(
 			
 			var fft = new FFT();
 			fft.init(logN);
-			
-			//            makeTone(f, sr, len)
-			var sig=utils.makeTone(sr/32, sr, windowLength)  
-					.concat(utils.makeTone(sr/8, sr, windowLength))
-					.concat(utils.makeTone(sr/16, sr, windowLength))
-					.concat(utils.makeTone(sr/4, sr, windowLength)); 
 
-			// Display audio input signal
-			inputDisplay.show(sig);
+
 
 			// This will hold the signal constructed from just doing the iFFT
 			var reconSig = new Array(sig.length).fill(0);
@@ -47,7 +55,7 @@ require(
 			var slicePlotWidth=c.width/numSlices; // pixels per slice
 			var spectDisplayShift=(slicePlotWidth*stepsPerFrame-slicePlotWidth)/2; // just used to nicely align display of spectrogram over waveform
 			console.log("canvas width is " + c.width + ", numSlices is " + numSlices + ", and the slicePlotWidth is " + slicePlotWidth);
-			var binPlotHeight= Math.floor(c.height/(windowLength/2+1)); // pixels per bin
+			var binPlotHeight= Math.max(1, Math.floor(c.height/(windowLength/2+1))); // pixels per bin
 	
 			// frame-length arrays to hold the waveform at various stems
 			var frame = new Array(windowLength);

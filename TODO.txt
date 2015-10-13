@@ -1,0 +1,3 @@
+Have the splotting function (in particular the spectral plot function)
+resample sample the data they are passed to fit the display. 
+
