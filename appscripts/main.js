@@ -1,33 +1,71 @@
 
 require(
-	["../myLibs/utils", "../myLibs/dnd",  "../myLibs/SpectrogramInverter", "../myLibs/audioDisplayFactorySVG", "../myLibs/fft"],
+	["../myLibs/utils", "../myLibs/dnd", "snd",  "../myLibs/SpectrogramInverter", "../myLibs/audioDisplayFactorySVG", "../myLibs/fft"],
 
-	function (utils, dnd, SpectrogramInverter, audioDisplayFactory) {
+	function (utils, dnd, sound, SpectrogramInverter, audioDisplayFactory) {
 
 		var c=document.getElementById("canvasID");
+		utils.clear(c);
 
 		// Initialize svg canvases for 3 audio wavefor displays
 		var inputDisplay=audioDisplayFactory("insigCanvasID");
 		var outputDisplay=audioDisplayFactory("outsigCanvasID");
 		var spsiDisplay=audioDisplayFactory("spsiCanvasID");
 
-		//            makeTone(f, sr, len)
+
 		var sr = 44100;
 		var i;
-		var logN = 8;
+		var logN = 11;
 		var windowLength = 1 << logN;
-		var sig=utils.makeTone(sr/32, sr, windowLength)  
-				.concat(utils.makeTone(sr/8, sr, windowLength))
-				.concat(utils.makeTone(sr/16, sr, windowLength))
-				.concat(utils.makeTone(sr/4, sr, windowLength)); 
+
+		var inSnd, ifftSnd, spsiSnd; // sound graphs for playing
+
+		// default signal:      makeTone(f, sr, len)
+		var sig=utils.makeTone(sr/32, sr, 2*windowLength)  
+				.concat(utils.makeTone(sr/8, sr, 2*windowLength))
+				.concat(utils.makeTone(sr/16, sr, 2*windowLength))
+				.concat(utils.makeTone(sr/4, sr, 2*windowLength)); 
 
 		// Display audio input signal
 		inputDisplay.show(sig);
+		inSnd = sound();
+		inSnd.farray2Buf(sig)
 
+		// Drag and drop action
 		dnd(document.getElementById("inSigDivId"), function(audioBuf){
 			sig=audioBuf.getChannelData(0);
+			inSnd = sound(audioBuf);
 			inputDisplay.show(sig);
+
+			outputDisplay.clear();
+			spsiDisplay.clear();
+			utils.clear(c);
 		});
+
+		// Play buttons for each of the 3 signals we are displaying
+		var inSndButt=document.getElementById("playInputButt");
+		var ifftSndButt=document.getElementById("playiFFTButt");
+		var spsiSndButt=document.getElementById("playReconButt");
+		// sound toggler for all 'play' buttons
+		var toggleSnd=function(e){
+			var snd;
+			if (e.target===inSndButt) {console.log("play inSnd"); snd = inSnd;};
+			if (e.target===ifftSndButt) {console.log("play ifftSnd"); snd = ifftSnd;};
+			if (e.target===spsiSndButt) {console.log("play spsiSnd"); snd = spsiSnd;};
+
+			if (! snd) {console.log("no snd here"); return;}
+			if (e.target.value==="PLAY"){
+				snd.play();
+				e.target.value="STOP";
+			} else{
+				snd.stop();
+				e.target.value="PLAY";
+			}
+		}
+		inSndButt.addEventListener("mousedown", toggleSnd);
+		ifftSndButt.addEventListener("mousedown", toggleSnd);
+		spsiSndButt.addEventListener("mousedown", toggleSnd);
+
 
 
 		
@@ -49,7 +87,7 @@ require(
 
 
 			// This will hold the signal constructed from just doing the iFFT
-			var reconSig = new Array(sig.length).fill(0);
+			var ifftSig = new Array(sig.length).fill(0);
 
 			var numSlices = Math.floor(sig.length/stepSize);
 			var slicePlotWidth=c.width/numSlices; // pixels per slice
@@ -57,6 +95,9 @@ require(
 			console.log("canvas width is " + c.width + ", numSlices is " + numSlices + ", and the slicePlotWidth is " + slicePlotWidth);
 			var binPlotHeight= Math.max(1, Math.floor(c.height/(windowLength/2+1))); // pixels per bin
 	
+			console.log("windowlength is " + windowLength + ", binPlotHeight " + binPlotHeight);
+			console.log("numSlices is " + numSlices + ", slicePlotWidth " + slicePlotWidth);
+
 			// frame-length arrays to hold the waveform at various stems
 			var frame = new Array(windowLength);
 			var reconFrame = new Array(windowLength);
@@ -75,6 +116,7 @@ require(
 			console.log("signal length is " + sig.length);
 			console.log("num slices will be " + numSlices);
 
+
 			// Step through the signal storing magnitude spectra as columns of a spectrogram
 			while((frameStartIndex+windowLength) <= sig.length) {
 				frame=sig.slice(frameStartIndex, frameStartIndex + windowLength);
@@ -89,7 +131,7 @@ require(
 				fft.inverseReal(specRe, specIm, reconFrame);
 				// window; overlapp add
 				wframe = utils.dotStar(hannWindow, reconFrame);
-				FPP.add_I(wframe, 0, reconSig, frameStartIndex, windowLength)
+				FPP.add_I(wframe, 0, ifftSig, frameStartIndex, windowLength)
 
 				// ------ log to console -------
 				//utils.arrays2Console(wframe, reconFrame, 0, windowLength, "wFrame  :   reconFrame");
@@ -97,6 +139,7 @@ require(
 				// Compute magnitude spectrum
 				specMag = utils.mag(specRe, specIm);
 				maxSectrogramVal = Math.max(maxSectrogramVal, Math.max(...specMag)); // The spread operater in ECMAScript6
+
 				spectrogram[frameNum]=specMag;
 
 				frameNum++;
@@ -104,13 +147,19 @@ require(
 			}
 
 			// Plot the spectrogram
-			utils.plot(spectrogram, slicePlotWidth, binPlotHeight, maxSectrogramVal, c, spectDisplayShift);//3*slicePlotWidth/2);
+			//utils.plot(spectrogram, slicePlotWidth, binPlotHeight, maxSectrogramVal, c, spectDisplayShift);//3*slicePlotWidth/2);
+			utils.plot2D(spectrogram, maxSectrogramVal, c);//3*slicePlotWidth/2);
+
+
+			ifftSnd=sound();
+			ifftSnd.farray2Buf(ifftSig)
+
 			// and the reconstructed audio signal
-			outputDisplay.show(reconSig);
+			outputDisplay.show(ifftSig);
 
 			//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 			// Now do the SPSI reconstruction! 
-			var spsireconSig = new Array(sig.length).fill(0);
+			var spsiReconSig = new Array(sig.length).fill(0);
 			var phaseAcc= new Array(windowLength/2+1).fill(0);
 			var m_tempRe = new Array(windowLength/2+1).fill(0);
 			var m_tempIm = new Array(windowLength/2+1).fill(0);
@@ -127,14 +176,17 @@ require(
 				// window
 				wframe = utils.dotStar(hannWindow, reconFrame);
 				// overlap and add
-				FPP.add_I(wframe, 0, spsireconSig, frameStartIndex, windowLength)
+				FPP.add_I(wframe, 0, spsiReconSig, frameStartIndex, windowLength)
 
 				frameNum++;
 				frameStartIndex+=stepSize;
 
 			}
+
+			spsiSnd=sound();
+			spsiSnd.farray2Buf(spsiReconSig)
 			// see what it looks like!
-			spsiDisplay.show(spsireconSig);
+			spsiDisplay.show(spsiReconSig);
 		
 			var debugText = document.getElementById('debugText');
 			debugText.innerHTML = "Done";

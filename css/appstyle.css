@@ -4,8 +4,8 @@ body, html {
 }
 
 #canvasID {
-	width: 800px;
-	height: 360px;
+	width: 800px;  /* css rescales, doesnt set the canvas width */  
+	height: 512px; /* css rescales, doesnt set the canvas height  */ 
 	border: 1px solid #00f;
 }
 

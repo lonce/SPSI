@@ -64,9 +64,9 @@ function(){
 		var decodeArrayBuffer = function (arraybuffer) {
 			var offlineAc = new OfflineAudioContext(1, 44100*40, 44100);
 
-			offlineAc.decodeAudioData(arraybuffer, (function (soundData) {
+			offlineAc.decodeAudioData(arraybuffer, (function (audioBuf) {
 				console.log("done with conversion -")
-				cb(soundData);
+				cb(audioBuf);
 
 			}));
 		};

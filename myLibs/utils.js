@@ -47,6 +47,53 @@ define(
 			}
 		}	
 
+		utils.clear = function(canvas){
+			var ctx=canvas.getContext("2d");
+			ctx.rect(0,0,canvas.width,canvas.height);
+			ctx.fillStyle="black";
+			ctx.fill();					
+		}
+
+		utils.plot2D = function(m, maxval, canvas){
+			var cwidth=canvas.width;
+			var cheight=canvas.height;
+			var maxi=m.length-1;  // used for mapping canvas coords to spectrogram coords
+			var maxj=m[0].length-1;
+
+			var mx, my;
+			var ctx = canvas.getContext("2d");
+
+			var mget=function(x,y){
+				//console.log("mget " + x + ", " + y);
+				if ((x >= maxi) || (y >= maxj)){
+					console.log ( "x is " + x + ", and y is " + y);
+					return(0);
+				}
+				var i1 = Math.floor(x);
+				var i2 = Math.ceil(x);
+				var j1 = Math.floor(y);
+				var j2 = Math.ceil(y);
+				if ((! m[i1]) || (! m[i2])) {
+					console.log ( "i1 is " + i1 + ", and i2 is " + i2);
+					return(0);
+
+				};
+				// weighted average of 4 grid points of m[][] near x,y
+				return ((j2-y)*m[i1][j1] + (y-j1)*m[i1][j2])*(i2-x) + ((j2-y)*m[i2][j1] + (y-j1)*m[i2][j2])*(x-i1);
+				//return Math.max(m[i1][j1], Math.max(m[i1][j2], Math.max(m[i2][j1], m[i2][j2])));
+			}
+
+			// for every pixel, interpolate from m[][]
+			for (var i=0;i<cwidth;i++){
+				for (var j=0;j<cheight;j++){
+					mx = utils.map(i,0,cwidth,0,maxi);
+					my = utils.map(j,0,cheight,0,maxj);
+					ctx.fillStyle=utils.heatHSL(Math.sqrt(mget(mx,my)),Math.sqrt(maxval));
+					ctx.fillRect(i,cheight-1-j,1,1);
+				}
+			}
+		}
+
 		// Generate a cos signal
 		utils.makeTone=function(f, sr, len){
 			var sig=[];

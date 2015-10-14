@@ -37,6 +37,10 @@ define(
  				svgWaveform.setAttributeNS(null, "d", pathString);
 			}
 
+			audioDisplay.clear=function(){
+				svgWaveform.setAttributeNS(null, "d", "");
+			}
+
 			// ------- Private ----------------------------------------------------------------
 			// Grab numPoints evenly spaced samples (interpolated) from whole of sig
 			var resample = function (sig, numPoints){

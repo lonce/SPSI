@@ -1,27 +1,28 @@
 <!DOCTYPE HTML>
 <html>
 	<head>
-		<title>FFT Test</title>
+		<title>SPSI Test</title>
 		<link rel="stylesheet" type="text/css" href="css/appstyle.css">
 		<script type="text/javascript" data-main="appscripts/main.js" src="jslibs/require.js"></script>
 	</head>
 	
 	<body >
-		<h1>FFT Test</h1>
-		Input Signal  <input type="button" id="playInputButt" value="PLAY" hidden><br>
+		<h1>SPSI Test</h1>
+		Input Signal  <input type="button" id="playInputButt" value="PLAY"><br>
+		(drag soundfile here)<br>
 		<div id="inSigDivId">
 			<svg class="audioCanvas" id="insigCanvasID"></svg>
 		</div> <br>
 		Spectrogram (magnitude)<br>
-		<canvas id="canvasID"></canvas><br>
-		Inverse FFT reconstruction  <input type="button" id="playiFFTButt" value="PLAY" hidden><br>
+		<canvas id="canvasID" width="800" height="1025"></canvas><br>
+		Inverse FFT reconstruction  <input type="button" id="playiFFTButt" value="PLAY"><br>
 		<svg class="audioCanvas" id="outsigCanvasID"></svg><br>
-		SPSI reconstruction  <input type="button" id="playReconButt" value="PLAY" hidden><br>
+		SPSI reconstruction  <input type="button" id="playReconButt" value="PLAY"><br>
 		<svg class="audioCanvas" id="spsiCanvasID"></svg> <br>
 
 		<p align="left" id='debugText'> .... </p>
 
-		<button id="testFFTButt" >Test FFT</button>
+		<button id="testFFTButt" >Test SPSI</button>
 		<button id="clearButt" >Clear</button>
 
 	</body>
