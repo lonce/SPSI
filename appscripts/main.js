@@ -9,7 +9,6 @@ require(
 
 		// Initialize svg canvases for 3 audio wavefor displays
 		var inputDisplay=audioDisplayFactory("insigCanvasID");
-		var outputDisplay=audioDisplayFactory("outsigCanvasID");
 		var spsiDisplay=audioDisplayFactory("spsiCanvasID");
 
 
@@ -18,10 +17,18 @@ require(
 		var logN = 11;
 		var windowLength = 1 << logN;
 
-		var inSnd, ifftSnd, spsiSnd; // sound graphs for playing
+		var inSnd, spsiSnd; // sound graphs for playing
 
-		// default signal:      makeTone(f, sr, len)
-		var sig=utils.makeTone(sr/32, sr, 2*windowLength)  
+		// "GLOBAL" - used in Sonogram and SPSI Reconstruction
+		var spectrogram = []; 
+		var fft = new FFT();
+		fft.init(logN);
+		//--------------
+		var sig=[];
+
+		/*
+		// test signal:      makeTone(f, sr, len)
+		sig=utils.makeTone(sr/32, sr, 2*windowLength)  
 				.concat(utils.makeTone(sr/8, sr, 2*windowLength))
 				.concat(utils.makeTone(sr/16, sr, 2*windowLength))
 				.concat(utils.makeTone(sr/4, sr, 2*windowLength)); 
@@ -29,7 +36,8 @@ require(
 		// Display audio input signal
 		inputDisplay.show(sig);
 		inSnd = sound();
-		inSnd.farray2Buf(sig)
+		inSnd.farray2Buf(sig);
+		*/
 
 		// Drag and drop action
 		dnd(document.getElementById("inSigDivId"), function(audioBuf){
@@ -37,20 +45,21 @@ require(
 			inSnd = sound(audioBuf);
 			inputDisplay.show(sig);
 
-			outputDisplay.clear();
 			spsiDisplay.clear();
 			utils.clear(c);
+
+			computeSonogram();
+
 		});
 
 		// Play buttons for each of the 3 signals we are displaying
 		var inSndButt=document.getElementById("playInputButt");
-		var ifftSndButt=document.getElementById("playiFFTButt");
+
 		var spsiSndButt=document.getElementById("playReconButt");
 		// sound toggler for all 'play' buttons
 		var toggleSnd=function(e){
 			var snd;
 			if (e.target===inSndButt) {console.log("play inSnd"); snd = inSnd;};
-			if (e.target===ifftSndButt) {console.log("play ifftSnd"); snd = ifftSnd;};
 			if (e.target===spsiSndButt) {console.log("play spsiSnd"); snd = spsiSnd;};
 
 			if (! snd) {console.log("no snd here"); return;}
@@ -63,31 +72,19 @@ require(
 			}
 		}
 		inSndButt.addEventListener("mousedown", toggleSnd);
-		ifftSndButt.addEventListener("mousedown", toggleSnd);
 		spsiSndButt.addEventListener("mousedown", toggleSnd);
-
-
 
 		
 		console.log("Spectrogram canvas width = " + c.width + ", and height = " + c.height);
 
-		// Called on button push
-		function onTestFFT()
+		function computeSonogram()
 		{
-
 			var frameStartIndex=0;
 			var frameNum=0;
 
 			var stepsPerFrame = 4;
 			var stepSize=windowLength/stepsPerFrame;
 			
-			var fft = new FFT();
-			fft.init(logN);
-
-
-
-			// This will hold the signal constructed from just doing the iFFT
-			var ifftSig = new Array(sig.length).fill(0);
 
 			var numSlices = Math.floor(sig.length/stepSize);
 			var slicePlotWidth=c.width/numSlices; // pixels per slice
@@ -107,9 +104,8 @@ require(
 			var specRe = new Array(windowLength/2+1);
 			var specIm = new Array(windowLength/2+1);
 			
-			var maxSectrogramVal=0;// = Math.max(...specMag); // The spread operater in ECMAScript6
+			var maxSpectrogramVal=0;// = Math.max(...specMag); // The spread operater in ECMAScript6
 			var specMag;
-			var spectrogram = []; // m[time, specMag]
 
 			var hannWindow=utils.hannArray(windowLength);
 			
@@ -125,20 +121,9 @@ require(
 				specIm.fill(0)
 				fft.forwardReal(wframe, specRe, specIm);
 				
-				// ------ log to console -------
-				//utils.arrays2Console(specRe, specIm, 0, windowLength/2+1, "specRe  :   SpecIm");
-				
-				fft.inverseReal(specRe, specIm, reconFrame);
-				// window; overlapp add
-				wframe = utils.dotStar(hannWindow, reconFrame);
-				FPP.add_I(wframe, 0, ifftSig, frameStartIndex, windowLength)
-
-				// ------ log to console -------
-				//utils.arrays2Console(wframe, reconFrame, 0, windowLength, "wFrame  :   reconFrame");
-				
 				// Compute magnitude spectrum
 				specMag = utils.mag(specRe, specIm);
-				maxSectrogramVal = Math.max(maxSectrogramVal, Math.max(...specMag)); // The spread operater in ECMAScript6
+				maxSpectrogramVal = Math.max(maxSpectrogramVal, Math.max(...specMag)); // The spread operater in ECMAScript6
 
 				spectrogram[frameNum]=specMag;
 
@@ -147,16 +132,35 @@ require(
 			}
 
 			// Plot the spectrogram
-			//utils.plot(spectrogram, slicePlotWidth, binPlotHeight, maxSectrogramVal, c, spectDisplayShift);//3*slicePlotWidth/2);
-			utils.plot2D(spectrogram, maxSectrogramVal, c);//3*slicePlotWidth/2);
+			//utils.plot(spectrogram, slicePlotWidth, binPlotHeight, maxSpectrogramVal, c, spectDisplayShift);//3*slicePlotWidth/2);
+			utils.plot2D(spectrogram, maxSpectrogramVal, c);//3*slicePlotWidth/2);			
+		}
 
+		// Called on button push
+		function onReconstruct()
+		{
 
-			ifftSnd=sound();
-			ifftSnd.farray2Buf(ifftSig)
+			var frameStartIndex=0;
+			var frameNum=0;
 
-			// and the reconstructed audio signal
-			outputDisplay.show(ifftSig);
+			var stepsPerFrame = 4;
+			var stepSize=windowLength/stepsPerFrame;
+			
 
+			// frame-length arrays to hold the waveform at various stems
+			var frame = new Array(windowLength);
+			var reconFrame = new Array(windowLength);
+			var wFrame; // a windowed frame 
+
+			// Real and Imaginary part of the spectrum
+			var specRe = new Array(windowLength/2+1);
+			var specIm = new Array(windowLength/2+1);
+			
+			var maxSpectrogramVal=0;// = Math.max(...specMag); // The spread operater in ECMAScript6
+			var specMag;
+
+			var hannWindow=utils.hannArray(windowLength);
+						
 			//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 			// Now do the SPSI reconstruction! 
 			var spsiReconSig = new Array(sig.length).fill(0);
@@ -188,20 +192,12 @@ require(
 			// see what it looks like!
 			spsiDisplay.show(spsiReconSig);
 		
-			var debugText = document.getElementById('debugText');
-			debugText.innerHTML = "Done";
-		}
-
-
-		
-		function onClear()
-		{
-			var debugText = document.getElementById('debugText');
-			debugText.innerHTML = " .... ";
 		}
 
 		// set up button listeners
-		document.getElementById("testFFTButt").addEventListener('click', onTestFFT);
-		document.getElementById("clearButt").addEventListener('click', onClear);
+		spsiDisplay.clear();
+		utils.clear(c);
+		computeSonogram();
+		document.getElementById("SPSIButt").addEventListener('click', onReconstruct);
 	}
 );

@@ -1,0 +1,35 @@
+howto
+
+iFFT
+
+
+<input type="button" id="playiFFTButt" value="PLAY"><br>
+<svg class="audioCanvas" id="outsigCanvasID"></svg><br>
+
+var iffTDisplay=audioDisplayFactory("outsigCanvasID");
+var ifftSnd;
+iffTDisplay.clear();
+var ifftSndButt=document.getElementById("playiFFTButt");
+
+
+
+var ifftSig = new Array(sig.length).fill(0);
+
+LOOP ---
+fft.inverseReal(specRe, specIm, reconFrame);
+// window; overlapp add
+wframe = utils.dotStar(hannWindow, reconFrame);
+FPP.add_I(wframe, 0, ifftSig, frameStartIndex, windowLength)
+---
+
+ifftSnd=sound();
+ifftSnd.farray2Buf(ifftSig)
+// and the reconstructed audio signal
+iffTDisplay.show(ifftSig);
+
+
+
+
+
+
+

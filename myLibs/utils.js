@@ -30,6 +30,7 @@ define(
 		// c - canvas to draw on
 		// shift to center slice displays over center of corresponding waveform window
 		utils.plot = function(m, pw, ph, maxval, c, shift){
+			if ((!m) || (m.length<=0)) return;
 			console.log("plot: slice width will be " + pw + ", and will shift by " + shift)
 			var maxi=m.length;
 			var maxj=m[0].length
@@ -54,18 +55,21 @@ define(
 			ctx.fill();					
 		}
 
-		utils.plot2D = function(m, maxval, canvas){
-			var cwidth=canvas.width;
-			var cheight=canvas.height;
-			var maxi=m.length-1;  // used for mapping canvas coords to spectrogram coords
-			var maxj=m[0].length-1;
+		// use canvas coords to sample (4-way interpolations) from m
+		// m is thus the "source" we sample from, and canvas is the dest where the sampled values will go
+		utils.plot2D = function(source, maxval, destination){
+			if ((!source) || (source.length<=0)) return;
+			var destWidth=destination.width;
+			var destHeight=destination.height;
+			var sourceWidth=source.length;  // used for mapping destination coords to spectrogram coords
+			var sourceHeight=source[0].length;
 
-			var mx, my;
-			var ctx = canvas.getContext("2d");
+			var sourceXfloat, sourceYfloat;
+			var ctx = destination.getContext("2d");
 
 			var mget=function(x,y){
 				//console.log("mget " + x + ", " + y);
-				if ((x >= maxi) || (y >= maxj)){
+				if ((x >= (sourceWidth-1)) || (y >= (sourceHeight-1))){
 					console.log ( "x is " + x + ", and y is " + y);
 					return(0);
 				}
@@ -73,26 +77,30 @@ define(
 				var i2 = Math.ceil(x);
 				var j1 = Math.floor(y);
 				var j2 = Math.ceil(y);
-				if ((! m[i1]) || (! m[i2])) {
+				if ((! source[i1]) || (! source[i2])) {
 					console.log ( "i1 is " + i1 + ", and i2 is " + i2);
 					return(0);
 
 				};
-				// weighted average of 4 grid points of m[][] near x,y
-				return ((j2-y)*m[i1][j1] + (y-j1)*m[i1][j2])*(i2-x) + ((j2-y)*m[i2][j1] + (y-j1)*m[i2][j2])*(x-i1);
-				//return Math.max(m[i1][j1], Math.max(m[i1][j2], Math.max(m[i2][j1], m[i2][j2])));
+				// weighted average of 4 grid points of source[][] near x,y
+				return ((j2-y)*source[i1][j1] + (y-j1)*source[i1][j2])*(i2-x) + ((j2-y)*source[i2][j1] + (y-j1)*source[i2][j2])*(x-i1);
+				//return Math.max(source[i1][j1], Math.max(source[i1][j2], Math.max(source[i2][j1], source[i2][j2])));
 			}
 
-			// for every pixel, interpolate from m[][]
-			for (var i=0;i<cwidth;i++){
-				for (var j=0;j<cheight;j++){
-					mx = utils.map(i,0,cwidth,0,maxi);
-					my = utils.map(j,0,cheight,0,maxj);
-					ctx.fillStyle=utils.heatHSL(Math.sqrt(mget(mx,my)),Math.sqrt(maxval));
-					ctx.fillRect(i,cheight-1-j,1,1);
+			// for every pixel, interpolate from source[][]
+			for (var i=0;i<destWidth;i++){
+				for (var j=0;j<destHeight;j++){
+					sourceXfloat = utils.map(i,0,destWidth,0,sourceWidth-1);
+					sourceYfloat = utils.map(j,0,destHeight,0,sourceHeight-1);
+					ctx.fillStyle=utils.heatHSL(Math.sqrt(mget(sourceXfloat,sourceYfloat)),Math.sqrt(maxval));
+					ctx.fillRect(i,destHeight-1-j,1,1);
 				}
 			}
 		}
+
+
+		// use matrix coordes to sample from canvas (interpolated) 
+		// 
 
 		// Generate a cos signal
 		utils.makeTone=function(f, sr, len){
