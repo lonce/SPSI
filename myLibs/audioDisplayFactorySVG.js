@@ -56,6 +56,9 @@ define(
 					ceilIndex=Math.ceil(fIndex);
 					w=fIndex%1;
 					retVal[i] = (1-w)*sig[floorIndex] + w*sig[ceilIndex];
+					if (isNaN(retVal[i])){
+						console.log("resample: NaN ");
+					}
 				}
 				return retVal;
 			}

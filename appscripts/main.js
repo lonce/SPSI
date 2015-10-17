@@ -1,8 +1,11 @@
 
 require(
-	["../myLibs/utils", "../myLibs/dnd", "snd",  "../myLibs/SpectrogramInverter", "../myLibs/audioDisplayFactorySVG", "../myLibs/fft"],
+	["../myLibs/utils", "../myLibs/dnd", "snd", "../myLibs/drawingCanvas",  "../myLibs/SpectrogramInverter", "../myLibs/audioDisplayFactorySVG", "../myLibs/fft"],
 
-	function (utils, dnd, sound, SpectrogramInverter, audioDisplayFactory) {
+	function (utils, dnd, sound, drawingCanvas, SpectrogramInverter, audioDisplayFactory) {
+		// Opens a canvas to show the full-resolution spectrogram of the drawing
+		var displayHighResFlag = false;
+		var loadTestSigFlag = false;
 
 		var c=document.getElementById("canvasID");
 		utils.clear(c);
@@ -20,24 +23,24 @@ require(
 		var inSnd, spsiSnd; // sound graphs for playing
 
 		// "GLOBAL" - used in Sonogram and SPSI Reconstruction
-		var spectrogram = []; 
-		var fft = new FFT();
-		fft.init(logN);
+		var soundSpectrogram = []; 
+		var matrix = [];
+
 		//--------------
 		var sig=[];
 
-		/*
-		// test signal:      makeTone(f, sr, len)
-		sig=utils.makeTone(sr/32, sr, 2*windowLength)  
-				.concat(utils.makeTone(sr/8, sr, 2*windowLength))
-				.concat(utils.makeTone(sr/16, sr, 2*windowLength))
-				.concat(utils.makeTone(sr/4, sr, 2*windowLength)); 
+		if (loadTestSigFlag){
+			// test signal:      makeTone(f, sr, len)
+			sig=utils.makeTone(sr/32, sr, 2*windowLength)  
+					.concat(utils.makeTone(sr/8, sr, 2*windowLength))
+					.concat(utils.makeTone(sr/16, sr, 2*windowLength))
+					.concat(utils.makeTone(sr/4, sr, 2*windowLength)); 
 
-		// Display audio input signal
-		inputDisplay.show(sig);
-		inSnd = sound();
-		inSnd.farray2Buf(sig);
-		*/
+			// Display audio input signal
+			inputDisplay.show(sig);
+			inSnd = sound();
+			inSnd.farray2Buf(sig);
+		}
 
 		// Drag and drop action
 		dnd(document.getElementById("inSigDivId"), function(audioBuf){
@@ -64,7 +67,9 @@ require(
 
 			if (! snd) {console.log("no snd here"); return;}
 			if (e.target.value==="PLAY"){
-				snd.play();
+				snd.play(function(){
+					e.target.value="PLAY"; // swith button back when sound ends
+				});
 				e.target.value="STOP";
 			} else{
 				snd.stop();
@@ -75,10 +80,43 @@ require(
 		spsiSndButt.addEventListener("mousedown", toggleSnd);
 
 		
-		console.log("Spectrogram canvas width = " + c.width + ", and height = " + c.height);
+		console.log("soundSpectrogram canvas width = " + c.width + ", and height = " + c.height);
+
+
+		//-------------------------------------------------------
+		var dc1=drawingCanvas("drawCanvas1ID", 460,windowLength/2+1);
+		var dc2=drawingCanvas("drawCanvas2ID");
+
+		var convertButt = document.getElementById("scaleConvertID");
+
+		for (var i=0;i<460;i++){
+			matrix[i]=new Array(windowLength/2+1).fill(0);
+		};
+		convertButt.addEventListener("click", function(){
+			utils.pixels2Matrix(dc1.hCanvas, matrix);
+
+			if (displayHighResFlag){
+				dc2.dCanvas.hidden=false;
+
+				// Show the hidden canvas in its full glory
+				//dc2.dCanvas.getContext("2d").drawImage(dc1.hCanvas , 0, 0, dc2.dCanvas.width, dc2.dCanvas.height);
+
+				// show the matrix in its full glory
+				utils.plot2D(matrix, utils.max2D(matrix), dc2.dCanvas);
+			}
+
+			onReconstruct(matrix);
+
+		});
+
+		//=----------------------------------------------------
+
+
 
 		function computeSonogram()
 		{
+
+
 			var frameStartIndex=0;
 			var frameNum=0;
 
@@ -88,7 +126,7 @@ require(
 
 			var numSlices = Math.floor(sig.length/stepSize);
 			var slicePlotWidth=c.width/numSlices; // pixels per slice
-			var spectDisplayShift=(slicePlotWidth*stepsPerFrame-slicePlotWidth)/2; // just used to nicely align display of spectrogram over waveform
+			var spectDisplayShift=(slicePlotWidth*stepsPerFrame-slicePlotWidth)/2; // just used to nicely align display of soundSpectrogram over waveform
 			console.log("canvas width is " + c.width + ", numSlices is " + numSlices + ", and the slicePlotWidth is " + slicePlotWidth);
 			var binPlotHeight= Math.max(1, Math.floor(c.height/(windowLength/2+1))); // pixels per bin
 	
@@ -113,7 +151,10 @@ require(
 			console.log("num slices will be " + numSlices);
 
 
-			// Step through the signal storing magnitude spectra as columns of a spectrogram
+			var fft = new FFT();
+			fft.init(logN);
+
+			// Step through the signal storing magnitude spectra as columns of a soundSpectrogram
 			while((frameStartIndex+windowLength) <= sig.length) {
 				frame=sig.slice(frameStartIndex, frameStartIndex + windowLength);
 				wframe = utils.dotStar(hannWindow, frame); 
@@ -125,19 +166,19 @@ require(
 				specMag = utils.mag(specRe, specIm);
 				maxSpectrogramVal = Math.max(maxSpectrogramVal, Math.max(...specMag)); // The spread operater in ECMAScript6
 
-				spectrogram[frameNum]=specMag;
+				soundSpectrogram[frameNum]=specMag;
 
 				frameNum++;
 				frameStartIndex+= stepSize;
 			}
 
-			// Plot the spectrogram
-			//utils.plot(spectrogram, slicePlotWidth, binPlotHeight, maxSpectrogramVal, c, spectDisplayShift);//3*slicePlotWidth/2);
-			utils.plot2D(spectrogram, maxSpectrogramVal, c);//3*slicePlotWidth/2);			
+			// Plot the soundSpectrogram
+			//utils.plot(soundSpectrogram, slicePlotWidth, binPlotHeight, maxSpectrogramVal, c, spectDisplayShift);//3*slicePlotWidth/2);
+			utils.plot2D(soundSpectrogram, maxSpectrogramVal, c);//3*slicePlotWidth/2);			
 		}
 
 		// Called on button push
-		function onReconstruct()
+		function onReconstruct(sgram)
 		{
 
 			var frameStartIndex=0;
@@ -161,25 +202,33 @@ require(
 
 			var hannWindow=utils.hannArray(windowLength);
 						
+			var fft = new FFT();
+			fft.init(logN);
+
 			//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 			// Now do the SPSI reconstruction! 
-			var spsiReconSig = new Array(sig.length).fill(0);
+			var spsiReconSig = new Array(Math.ceil(((sgram.length+3)*windowLength)/4)).fill(0);
 			var phaseAcc= new Array(windowLength/2+1).fill(0);
 			var m_tempRe = new Array(windowLength/2+1).fill(0);
 			var m_tempIm = new Array(windowLength/2+1).fill(0);
 
+			var foo1 = sgram.length;
+
 			frameNum=0;
 			frameStartIndex=0;
-			while(frameNum < spectrogram.length) {
+			while(frameNum < sgram.length) {
 				// phaseAcc is used both as input (current phases) and as output (returned phases) at each step
-				SpectrogramInverter.phaseEstimate(spectrogram[frameNum], phaseAcc);
+				SpectrogramInverter.phaseEstimate(sgram[frameNum], phaseAcc);
 				//convert (mag, phase) to (re, im)
-				FPP.polarToCart( spectrogram[frameNum], phaseAcc, m_tempRe, m_tempIm, windowLength/2 );
+				FPP.polarToCart( sgram[frameNum], phaseAcc, m_tempRe, m_tempIm, windowLength/2 );
 				// invert
 				fft.inverseReal(m_tempRe, m_tempIm, reconFrame);
 				// window
 				wframe = utils.dotStar(hannWindow, reconFrame);
 				// overlap and add
+				if (frameNum === (sgram.length-1)){
+					var foo = 3;
+				}
 				FPP.add_I(wframe, 0, spsiReconSig, frameStartIndex, windowLength)
 
 				frameNum++;
@@ -198,6 +247,13 @@ require(
 		spsiDisplay.clear();
 		utils.clear(c);
 		computeSonogram();
-		document.getElementById("SPSIButt").addEventListener('click', onReconstruct);
+		document.getElementById("clearDrawingButtID").addEventListener('click', function(){
+				dc1.clear();
+				if (dc2) {dc2.clear()};
+		});
+		document.getElementById("SPSIButt").addEventListener('click', function(){
+			onReconstruct(soundSpectrogram);
+		});
+
 	}
 );

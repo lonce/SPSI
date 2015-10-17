@@ -15,7 +15,15 @@
 		</div> <br>
 		Spectrogram (magnitude)<br>
 		<canvas id="canvasID" width="800" height="1025"></canvas><br>
-		<button id="SPSIButt" >RECONSTRUCT</button><br><br>
+		<input type="button" id="SPSIButt" value="Create SPSI sig"></input><br><br>
+
+		<h4> Draw on this canvas: </h4>
+		<canvas id="drawCanvas1ID" class="drawingCanvas" width="800" height="256"></canvas><br>	
+		<input type="button" id="clearDrawingButtID" value="Clear">   
+		<input type="button" id="scaleConvertID" value="Create SPSI sig"><br>
+
+		<canvas id="drawCanvas2ID" class="drawingCanvas" width="800" height="1025" hidden></canvas><br>
+
 
 		SPSI reconstruction  <input type="button" id="playReconButt" value="PLAY"><br>
 

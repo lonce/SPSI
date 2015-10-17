@@ -28,10 +28,13 @@ function(){
 			snd.srcNode.connect(audioCtx.destination);	
 		}
 
-		snd.play = function(){
+		snd.play = function(cb){
 			snd.loadBufferSrc();
 			if (snd.srcNode!=null){
 				snd.srcNode.start();
+				if (cb) {
+					snd.srcNode.onended=cb;
+				};
 			}else{
 				console.log("Sound buffer not initialized yet");
 			}

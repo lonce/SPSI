@@ -2,9 +2,32 @@ define(
 	function(){
 		utils={};
 
+        utils.getCanvasMousePosition = function (canvas, evt) {
+            var rect = canvas.getBoundingClientRect();
+            //context.scale(1, 0.5);
+            var bbox = canvas.getBoundingClientRect();
+            return {
+            x: (evt.clientX - rect.left)*(canvas.width/bbox.width),
+            y: (evt.clientY - rect.top)*(canvas.height/bbox.height)
+            };
+        }
+
+        utils.max2D=function(m){
+        	var maxval=0;
+        	var maxi=m.length;
+			var maxj=m[0].length
+			for(var i=0;i<maxi;i++){
+				for(j=0;j<maxj;j++)
+					if (m[i][j] > maxval) {maxval=m[i][j];}
+			}
+			return maxval;
+        }
+            
 		utils.map=function(val, m, n, p, q){
 			return p + ((val-m)/(n-m))*(q-p);
 		}
+
+
 
 		// returns vector of r[i] =  sqrt(a[i]*a[i]+b[i]*b[i])
 		utils.mag=function(a,b){
@@ -58,6 +81,8 @@ define(
 		// use canvas coords to sample (4-way interpolations) from m
 		// m is thus the "source" we sample from, and canvas is the dest where the sampled values will go
 		utils.plot2D = function(source, maxval, destination){
+			var time = Date.now();
+
 			if ((!source) || (source.length<=0)) return;
 			var destWidth=destination.width;
 			var destHeight=destination.height;
@@ -96,11 +121,45 @@ define(
 					ctx.fillRect(i,destHeight-1-j,1,1);
 				}
 			}
+
+			console.log("plot2D took " + (Date.now()-time) + " milliseconds");
+
 		}
 
+		//https://en.wikipedia.org/wiki/Grayscale
+		var rgb2grey = function(r, g, b){
+			return .299*r + .587*g + .114*b;
+		}
 
-		// use matrix coordes to sample from canvas (interpolated) 
-		// 
+		// Here, source is a canvas, and destination is a 2D array
+		utils.pixels2Matrix = function(source, destination){
+			if ((!source) || (source.length<=0)) return;
+			var destWidth=destination.length;
+			var destHeight=destination[0].length;
+
+			// Intercavas does our interpolation for us
+			var interCanvas = document.createElement("canvas");
+			interCanvas.width=destWidth;
+			interCanvas.height=destHeight;
+			var interCtx=interCanvas.getContext("2d");
+			interCtx.drawImage(source , 0, 0, destWidth, destHeight);
+
+			var time = Date.now();
+			var pixelData = interCtx.getImageData(0,0,destWidth, destHeight);
+			// now the interCanvas and the matrix are the same dimensions. Just grab pixel data and convert to grey scale. 
+			var pixel;
+			var pindex=0;
+				for(var j=0;j<destHeight;j++){
+					for (var i=0;i<destWidth; i++){
+
+					//pixel=interCtx.getImageData(i, j, 1, 1);
+					//destination[i][j]=rgb2grey(pixel.data[0], pixel.data[1], pixel.data[2]);
+					destination[i][destHeight-1-j]=rgb2grey(pixelData.data[pindex], pixelData.data[pindex+1], pixelData.data[pindex+2]);
+					pindex+=4;
+				}
+			}
+			console.log("pixels2Matrix took " + (Date.now()-time) + " milliseconds");
+		}
 
 		// Generate a cos signal
 		utils.makeTone=function(f, sr, len){
