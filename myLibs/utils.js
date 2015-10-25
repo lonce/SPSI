@@ -1,4 +1,5 @@
 define(
+	[],
 	function(){
 		utils={};
 
@@ -155,11 +156,59 @@ define(
 					//pixel=interCtx.getImageData(i, j, 1, 1);
 					//destination[i][j]=rgb2grey(pixel.data[0], pixel.data[1], pixel.data[2]);
 					destination[i][destHeight-1-j]=rgb2grey(pixelData.data[pindex], pixelData.data[pindex+1], pixelData.data[pindex+2]);
+					if (destination[i][destHeight-1-j] != 0){
+						console.log("pt ["+i+","+j+"] = " + destination[i][destHeight-1-j]);
+					}
 					pindex+=4;
+					
 				}
 			}
 			console.log("pixels2Matrix took " + (Date.now()-time) + " milliseconds");
 		}
+
+		utils.svg2Matrix = function(isvgObj, destination, cb){
+			
+			var svgObj = isvgObj.cloneNode(true);
+
+			// Scale svg to fit desination size
+			svgObj.setAttribute("width", destination.length);
+			svgObj.setAttribute("height", destination[0].length);
+			svgObj.setAttributeNS(null, "viewBox", "0 0 " + isvgObj.clientWidth + " " + isvgObj.clientHeight);
+			svgObj.setAttributeNS(null, "preserveAspectRatio", "none");
+
+
+			isvgObj.setAttributeNS(null, "transform", "scale(" + destination.length/isvgObj.clientWidth + " " + destination[0].length/isvgObj.clientHeight +")");
+
+
+
+
+			var data = new XMLSerializer().serializeToString(svgObj);
+			var svg = new Blob([data], {type: 'image/svg+xml;charset=utf-8'});
+			var DOMURL = window.URL || window.webkitURL || window;
+			var url = DOMURL.createObjectURL(svg);
+
+			var c = document.createElement("canvas");
+			c.width = destination.length;
+			c.height = destination[0].length;
+			var ctx = c.getContext('2d');
+			ctx.fillStyle="black";
+			ctx.fillRect(0,0,c.width, c.height);	
+
+
+			var img = new Image();
+			img.onload = function () {
+				ctx.drawImage(img, 0, 0);
+				DOMURL.revokeObjectURL(url);
+
+				utils.pixels2Matrix(c, destination);
+				//document.getElementById("svgCanvasDiv").appendChild(c);
+				cb();
+			}
+
+			img.src = url;
+
+		}
+
 
 		// Generate a cos signal
 		utils.makeTone=function(f, sr, len){

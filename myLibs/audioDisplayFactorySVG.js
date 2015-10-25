@@ -11,7 +11,6 @@ define(
 			audioDisplay={};
 
 			var svgelmt;  // from the DOM
-			var ctx;
 			var backgroundColor="#000000";
 			var cHeight, cWidth;
 
@@ -68,7 +67,7 @@ define(
 			cWidth=svgelmt.width.baseVal.value;
 			cHeight=svgelmt.height.baseVal.value;
 
-		    bgrect=document.createElementNS(static_xmlns,"rect");
+		    var bgrect=document.createElementNS(static_xmlns,"rect");
 		    svgelmt.appendChild(bgrect);
     		bgrect.setAttributeNS(null, "fill", backgroundColor);
 			bgrect.setAttributeNS(null, "x", 0);

@@ -1,9 +1,13 @@
+// dCanvas is the displayed canvas that the user sees and draws on.
+// hCanvas is the hidden canvas that has the specified dimensions (generally corresponding to
+//   the dimensions of the spectrogram that we will use to convert to a matrix for SPSI conversion
+
 define(
 ["../myLibs/utils"],
 function(utils){
 
 
-	return function(id, realW, realH){ // id is a id for an svg element on the html DOM that has been sized already
+	return function(id, realW, realH){ // id is a id for an canvas element on the html DOM that has been sized already
 		// The object returned by this factory method
 		var dc={
 			dCanvas : document.getElementById(id),
@@ -44,6 +48,7 @@ function(utils){
 			lastX=cpos.x;
 			lastY=cpos.y;
 
+			// if we have a hidden canvas, draw on it, too.
 			if (dc.hCanvas){
 				hpos = quickMap(cpos);
 				hLastX = hpos.x;

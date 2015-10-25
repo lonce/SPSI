@@ -1,8 +1,8 @@
 
 require(
-	["../myLibs/utils", "../myLibs/dnd", "snd", "../myLibs/drawingCanvas",  "../myLibs/SpectrogramInverter", "../myLibs/audioDisplayFactorySVG", "../myLibs/fft"],
+	["../myLibs/utils", "../myLibs/dnd", "snd", "../myLibs/drawingCanvas", "../myLibs/svgDrawingCanvas",  "../myLibs/SpectrogramInverter", "../myLibs/audioDisplayFactorySVG", "../myLibs/fft"],
 
-	function (utils, dnd, sound, drawingCanvas, SpectrogramInverter, audioDisplayFactory) {
+	function (utils, dnd, sound, drawingCanvas, svgDrawingCanvas, SpectrogramInverter, audioDisplayFactory) {
 		// Opens a canvas to show the full-resolution spectrogram of the drawing
 		var displayHighResFlag = false;
 		var loadTestSigFlag = false;
@@ -83,6 +83,7 @@ require(
 		console.log("soundSpectrogram canvas width = " + c.width + ", and height = " + c.height);
 
 
+/*
 		//-------------------------------------------------------
 		var dc1=drawingCanvas("drawCanvas1ID", 460,windowLength/2+1);
 		var dc2=drawingCanvas("drawCanvas2ID");
@@ -109,14 +110,41 @@ require(
 
 		});
 
+*/
 		//=----------------------------------------------------
+		var dc1=svgDrawingCanvas("svgCanvasDiv", 800, 256);
+		var dc2=drawingCanvas("drawCanvas2ID");
+
+		var convertButt = document.getElementById("scaleConvertID");
+
+		for (var i=0;i<460;i++){
+			matrix[i]=new Array(windowLength/2+1).fill(0);
+		};
 
 
+		convertButt.addEventListener("click", function(){
+			utils.svg2Matrix(dc1.svgelmt, matrix, function(){
 
+				if (displayHighResFlag){
+					dc2.dCanvas.hidden=false;
+
+					// Show the hidden canvas in its full glory
+					//dc2.dCanvas.getContext("2d").drawImage(dc1.hCanvas , 0, 0, dc2.dCanvas.width, dc2.dCanvas.height);
+
+					// show the matrix in its full glory
+					utils.plot2D(matrix, utils.max2D(matrix), dc2.dCanvas);
+				}
+
+				onReconstruct(matrix);
+							
+			});
+
+
+		});
+
+		//----------------------------------------------------
 		function computeSonogram()
 		{
-
-
 			var frameStartIndex=0;
 			var frameNum=0;
 
