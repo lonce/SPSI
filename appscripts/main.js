@@ -112,7 +112,7 @@ require(
 
 */
 		//=----------------------------------------------------
-		var dc1=svgDrawingCanvas("svgCanvasDiv", 800, 256);
+		var svgDC=svgDrawingCanvas("svgCanvasDiv", 800, 256);
 		var dc2=drawingCanvas("drawCanvas2ID");
 
 		var convertButt = document.getElementById("scaleConvertID");
@@ -123,23 +123,30 @@ require(
 
 
 		convertButt.addEventListener("click", function(){
-			utils.svg2Matrix(dc1.svgelmt, matrix, function(){
+			utils.svg2Matrix(svgDC.svgelmt, matrix, function(){
 
 				if (displayHighResFlag){
 					dc2.dCanvas.hidden=false;
-
 					// Show the hidden canvas in its full glory
-					//dc2.dCanvas.getContext("2d").drawImage(dc1.hCanvas , 0, 0, dc2.dCanvas.width, dc2.dCanvas.height);
+					//dc2.dCanvas.getContext("2d").drawImage(svgDC.hCanvas , 0, 0, dc2.dCanvas.width, dc2.dCanvas.height);
 
 					// show the matrix in its full glory
 					utils.plot2D(matrix, utils.max2D(matrix), dc2.dCanvas);
 				}
-
-				onReconstruct(matrix);
-							
+				onReconstruct(matrix);			
 			});
+		});
 
+		var vScaleSlider = document.getElementById("vScaleSlider");
+		vScaleSlider.addEventListener("input", function(){
+			document.getElementById("vScaleText").value=vScaleSlider.value;
+			svgDC.scale(hScaleSlider.value, vScaleSlider.value);
+		});
 
+		var hScaleSlider = document.getElementById("hScaleSlider");
+		hScaleSlider.addEventListener("input", function(){
+			document.getElementById("hScaleText").value=hScaleSlider.value;
+			svgDC.scale(hScaleSlider.value, vScaleSlider.value);
 		});
 
 		//----------------------------------------------------
@@ -276,7 +283,8 @@ require(
 		utils.clear(c);
 		computeSonogram();
 		document.getElementById("clearDrawingButtID").addEventListener('click', function(){
-				dc1.clear();
+				if (svgDC) {svgDC.clear()};
+				if (dc1) {dc1.clear()};
 				if (dc2) {dc2.clear()};
 		});
 		document.getElementById("SPSIButt").addEventListener('click', function(){

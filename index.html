@@ -10,25 +10,40 @@
 		<h1>SPSI Test</h1>
 		Input Signal  <input type="button" id="playInputButt" value="PLAY"><br>
 		(drag soundfile to this panel)<br>
+		<!-- Audio Signale ---------------------------------- -->
 		<div id="inSigDivId">
 			<svg class="audioCanvas" id="insigCanvasID"></svg>
 		</div> <br>
 		Spectrogram (magnitude)<br>
+		<!-- Spectrogram ------------------------------------ -->
 		<canvas id="canvasID" width="800" height="1025"></canvas><br>
 		<input type="button" id="SPSIButt" value="Create SPSI sig"></input><br><br>
-
+		<!--  Drawing Canvas --------------------------------- -->
 		<h4> Draw on this canvas: </h4>
 		<div id="svgCanvasDiv">
 			<!-- This is the HTML 5 canvas on the "bottom" -->
-			<canvas id="drawCanvas1ID" class="drawingCanvas" width="800" height="256"></canvas><br>	
+			<canvas id="drawCanvas1ID" class="drawingCanvas" width="800" height="256"></canvas> 
+			<input type="range" id="vScaleSlider" class="vslider" min="1" max="5" step=".25" value="1" />
+			<input type="range" id="hScaleSlider"  min="1" max="5" step=".25" value="1" />
+			<div id="imgControls">
+				Controls<br>
+				<input type="button" id="CopySpectButt" value="Copy Spectrogram"></input><br><br><br>
+				vertical scale
+				<input type="text" id="vScaleText" value="1"><br>
+				horizontal scale
+				<input type="text" id="hScaleText" value="1"><br>
+			</div>
+			<br>	
 		</div>
-		
+
 		<input type="button" id="clearDrawingButtID" value="Clear">   
 		<input type="button" id="scaleConvertID" value="Create SPSI sig"><br>
 
+		<!-- Hidden canvas ------------------------------------------ -->
+		<!-- for optional viewing of full-res matrix -->
 		<canvas id="drawCanvas2ID" class="drawingCanvas" width="800" height="1025" hidden></canvas><br>
 
-
+		<!-- Audio Reconstruction ------------------------------ -->
 		SPSI reconstruction  <input type="button" id="playReconButt" value="PLAY"><br>
 
 		<svg class="audioCanvas" id="spsiCanvasID"></svg> <br>

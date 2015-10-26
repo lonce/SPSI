@@ -13,6 +13,10 @@ function(utils){
 			lineWidth : 1,
 			hCanvas : null,
 			backgroundColor :  "black",
+			viewScaleW : 1,
+			viewScaleH : 1,
+			viewShiftW : 0,
+			viewShiftH : 0,
 			clear : function () { var c = dc.svgelmt; while (c.firstChild) { c.removeChild(c.firstChild); }}
 
 		};
@@ -24,6 +28,8 @@ function(utils){
 
 		dc.svgelmt.setAttributeNS(null, "width", iwidth);
 		dc.svgelmt.setAttributeNS(null, "height", iheight);
+		// so we can scale in whatever dimension we want later.
+		dc.svgelmt.setAttributeNS(null, "preserveAspectRatio", "none");
 
 
 		var svgCanvasWidth=dc.svgelmt.width.baseVal.value;
@@ -46,9 +52,9 @@ function(utils){
 		var svgPath;
 
 
-	    svgCanvasDiv.addEventListener("mousedown", function(e){
+	    dc.svgelmt.addEventListener("mousedown", function(e){
 	    	console.log("black mouse down!!!!!!!!!!")
-	    	pathString = "M " + e.offsetX + "," + e.offsetY + " "
+	    	pathString = "M " + e.offsetX/dc.viewScaleW + "," + (dc.viewShiftH + e.offsetY/dc.viewScaleH) + " "
 	       	svgPath = document.createElementNS(static_xmlns, "path");
 	       	dc.svgelmt.appendChild(svgPath);
 	       	svgPath.setAttributeNS(null, "stroke", dc.strokeStyle);
@@ -60,21 +66,34 @@ function(utils){
 
 	    });
 
-	    svgCanvasDiv.addEventListener("mousemove", function(e){
+	    dc.svgelmt.addEventListener("mousemove", function(e){
 	    	if (mousePushed){
 	    		console.log("mouse move!")
-		    	pathString += "L " + e.offsetX + "," + e.offsetY + " ";
+		    	pathString += "L " + e.offsetX/dc.viewScaleW + "," + (dc.viewShiftH + e.offsetY/dc.viewScaleH) + " ";
 		    	svgPath.setAttributeNS(null, "d", pathString);
 		    	//console.log("pathString is " + pathString);
 		    }
 	    });
 
-	    svgCanvasDiv.addEventListener("mouseup", function(e){
+	    dc.svgelmt.addEventListener("mouseup", function(e){
 	    	console.log("mouseup!!!!!!!!!!!!")
-	    	pathString += "L " + e.offsetX + "," + e.offsetY + " ";
+	    	pathString += "L " + e.offsetX/dc.viewScaleW + "," + (dc.viewShiftH + e.offsetY/dc.viewScaleH) + " ";
 	    	svgPath.setAttributeNS(null, "d", pathString);
 	    	mousePushed=false;
 	    });
+
+	    dc.scale = function(ws, hs){
+	    	var bbw = dc.svgelmt.getBBox().width;
+	    	var bbh = dc.svgelmt.getBBox().height
+	    	ws = ws || 1;
+	    	hs = hs || 1;
+	    	dc.viewScaleW = ws;
+	    	dc.viewScaleH = hs;
+	    	dc.viewShiftH = bbh-bbh/hs;  // when we scale vertically, we also shift because of the upuside down coords. 
+
+	    	dc.svgelmt.setAttributeNS(null, "viewBox", 0  + " " + dc.viewShiftH + " " + bbw/ws + " " + bbh/hs);
+
+	    }
 
 
 	    dc.svgCanvasDiv.appendChild(dc.svgelmt);

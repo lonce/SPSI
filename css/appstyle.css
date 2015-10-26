@@ -27,3 +27,19 @@ body, html {
 .drawingCanvas{
 	background-color: black;
 }
+
+.vslider{
+    -webkit-appearance: slider-vertical;
+    width: 20px;
+    height: 100px;
+}
+
+#imgControls{
+	border: 1px solid #00f;
+	height: 256;
+	float: right;
+}
+
+#scaleText{
+	border: 1px solid #f0f;
+}
