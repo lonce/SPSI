@@ -3,7 +3,7 @@ body, html {
 	height: 100%;	
 }
 
-#canvasID {
+#spectCanvasID {
 	width: 800px;  /* css rescales, doesnt set the canvas width */  
 	height: 256px; /* css rescales, doesnt set the canvas height  */ 
 	border: 1px solid #00f;

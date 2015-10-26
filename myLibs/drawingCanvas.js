@@ -11,10 +11,15 @@ function(utils){
 		// The object returned by this factory method
 		var dc={
 			dCanvas : document.getElementById(id),
+			imgData : new Image(),
 			strokeStyle :  "#FF00FF",
 			lineWidth : 1,
 			hCanvas : null,
-			backgroundColor :  "black"
+			backgroundColor :  "black",
+			viewScaleW : 1,
+			viewScaleH : 1,
+			viewShiftW : 0,
+			viewShiftH : 0,
 		};
 
 		var dCanvasWidth=dc.dCanvas.width;
@@ -111,6 +116,28 @@ function(utils){
 			}
 
 		});
+
+		dc.setImage = function(imgsrc){
+			dc.imgData.src=imgsrc;
+			ctx.drawImage(dc.imgData, 0, 0, dc.dCanvas.width, dc.dCanvas.height);
+
+		}
+
+		dc.scale = function(ws, hs){
+	    	var bbw = dc.imgData.width;
+	    	var bbh = dc.imgData.height
+	    	ws = ws || 1;
+	    	hs = hs || 1;
+	    	dc.viewScaleW = ws;
+	    	dc.viewScaleH = hs;
+	    	dc.viewShiftH = bbh-bbh/hs;  // when we scale vertically, we also shift because of the upuside down coords. 
+
+			ctx.drawImage(dc.imgData, 0, dc.viewShiftH, bbw/ws, bbh/hs, 0, 0, dc.dCanvas.width, dc.dCanvas.height);
+	    	//dc.svgelmt.setAttributeNS(null, "viewBox", 0  + " " + dc.viewShiftH + " " + bbw/ws + " " + bbh/hs);
+
+
+
+		}
 
 		dc.clear = function(){
 			ctx.fillStyle=dc.backgroundColor;

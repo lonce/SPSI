@@ -7,8 +7,8 @@ require(
 		var displayHighResFlag = false;
 		var loadTestSigFlag = false;
 
-		var c=document.getElementById("canvasID");
-		utils.clear(c);
+		var spectCanvas=document.getElementById("spectCanvasID");
+		utils.clear(spectCanvas);
 
 		// Initialize svg canvases for 3 audio wavefor displays
 		var inputDisplay=audioDisplayFactory("insigCanvasID");
@@ -49,7 +49,7 @@ require(
 			inputDisplay.show(sig);
 
 			spsiDisplay.clear();
-			utils.clear(c);
+			utils.clear(spectCanvas);
 
 			computeSonogram();
 
@@ -80,13 +80,13 @@ require(
 		spsiSndButt.addEventListener("mousedown", toggleSnd);
 
 		
-		console.log("soundSpectrogram canvas width = " + c.width + ", and height = " + c.height);
+		console.log("soundSpectrogram canvas width = " + spectCanvas.width + ", and height = " + spectCanvas.height);
 
 
-/*
+
 		//-------------------------------------------------------
 		var dc1=drawingCanvas("drawCanvas1ID", 460,windowLength/2+1);
-		var dc2=drawingCanvas("drawCanvas2ID");
+/*		var dc2=drawingCanvas("drawCanvas2ID");
 
 		var convertButt = document.getElementById("scaleConvertID");
 
@@ -141,14 +141,21 @@ require(
 		vScaleSlider.addEventListener("input", function(){
 			document.getElementById("vScaleText").value=vScaleSlider.value;
 			svgDC.scale(hScaleSlider.value, vScaleSlider.value);
+			dc1.scale(hScaleSlider.value, vScaleSlider.value);
 		});
 
 		var hScaleSlider = document.getElementById("hScaleSlider");
 		hScaleSlider.addEventListener("input", function(){
 			document.getElementById("hScaleText").value=hScaleSlider.value;
 			svgDC.scale(hScaleSlider.value, vScaleSlider.value);
+			dc1.scale(hScaleSlider.value, vScaleSlider.value);
 		});
 
+		var copySpectButt = document.getElementById("copySpectButt");
+			copySpectButt.addEventListener('click', function(){
+			dc1.setImage(spectCanvas.toDataURL());
+
+		});
 		//----------------------------------------------------
 		function computeSonogram()
 		{
@@ -160,10 +167,10 @@ require(
 			
 
 			var numSlices = Math.floor(sig.length/stepSize);
-			var slicePlotWidth=c.width/numSlices; // pixels per slice
+			var slicePlotWidth=spectCanvas.width/numSlices; // pixels per slice
 			var spectDisplayShift=(slicePlotWidth*stepsPerFrame-slicePlotWidth)/2; // just used to nicely align display of soundSpectrogram over waveform
-			console.log("canvas width is " + c.width + ", numSlices is " + numSlices + ", and the slicePlotWidth is " + slicePlotWidth);
-			var binPlotHeight= Math.max(1, Math.floor(c.height/(windowLength/2+1))); // pixels per bin
+			console.log("canvas width is " + spectCanvas.width + ", numSlices is " + numSlices + ", and the slicePlotWidth is " + slicePlotWidth);
+			var binPlotHeight= Math.max(1, Math.floor(spectCanvas.height/(windowLength/2+1))); // pixels per bin
 	
 			console.log("windowlength is " + windowLength + ", binPlotHeight " + binPlotHeight);
 			console.log("numSlices is " + numSlices + ", slicePlotWidth " + slicePlotWidth);
@@ -208,8 +215,8 @@ require(
 			}
 
 			// Plot the soundSpectrogram
-			//utils.plot(soundSpectrogram, slicePlotWidth, binPlotHeight, maxSpectrogramVal, c, spectDisplayShift);//3*slicePlotWidth/2);
-			utils.plot2D(soundSpectrogram, maxSpectrogramVal, c);//3*slicePlotWidth/2);			
+			//utils.plot(soundSpectrogram, slicePlotWidth, binPlotHeight, maxSpectrogramVal, spectCanvas, spectDisplayShift);//3*slicePlotWidth/2);
+			utils.plot2D(soundSpectrogram, maxSpectrogramVal, spectCanvas);//3*slicePlotWidth/2);			
 		}
 
 		// Called on button push
@@ -280,7 +287,7 @@ require(
 
 		// set up button listeners
 		spsiDisplay.clear();
-		utils.clear(c);
+		utils.clear(spectCanvas);
 		computeSonogram();
 		document.getElementById("clearDrawingButtID").addEventListener('click', function(){
 				if (svgDC) {svgDC.clear()};
