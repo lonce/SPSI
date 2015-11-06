@@ -4,45 +4,83 @@ function(utils){
 	// The svg namespace
 	var static_xmlns = "http://www.w3.org/2000/svg";
 
-	return function(id, iwidth, iheight){ // id is a id for an svg element on the html DOM that has been sized already
+	// canvasDiv is where the svg element will be placed (absolute 0,0)
+	// vWidth and vHeight are for viewing, realWidth and realHeight are the real size we draw upon
+	return function(id, vWidth, vHeight, realWidth, realHeight){ // id is a id for an svg element on the html DOM that has been sized already
 		// The object returned by this factory method
 		var dc={
 			svgCanvasDiv : document.getElementById(id),
-			svgelmt  : document.createElementNS("http://www.w3.org/2000/svg", "svg"),
-			strokeStyle :  "#00FFFF",
+			vSVG : document.createElementNS("http://www.w3.org/2000/svg", "svg"),
+			spectSVG  : document.createElementNS("http://www.w3.org/2000/svg", "svg"),
+			strokeStyle :  "#FFFFFF",
 			lineWidth : 1,
 			hCanvas : null,
-			backgroundColor :  "black",
-			viewScaleW : 1,
-			viewScaleH : 1,
+
+			zoomX  : 1, // the portion of the image in the view
+			zoomY : 1,
+			viewRatioW : vWidth/realWidth, //scale means relative to realHeight and Width
+			viewRatioH : vHeight/realHeight,
+			pixelScaleW : function(p){return (p/(dc.zoomX*dc.viewRatioW));},
+			pixelScaleH : function(p){return (p/(dc.zoomY*dc.viewRatioH));},
+
+
 			viewShiftW : 0,
 			viewShiftH : 0,
-			clear : function () { var c = dc.svgelmt; while (c.firstChild) { c.removeChild(c.firstChild); }}
-
+			clear : function () { var c = dc.spectSVG; while (c.firstChild) { c.removeChild(c.firstChild); }}
 		};
 
-		dc.svgelmt.id="isvgObj";
-		dc.svgelmt.style.position = "absolute";
-		dc.svgelmt.style.top = 0;
+		dc.vSVG.id="isvgObj";
+		dc.vSVG.style.position = "absolute";
+		dc.vSVG.style.top = 0;
+		dc.vSVG.setAttributeNS(null, "width", vWidth);
+		dc.vSVG.setAttributeNS(null, "height", vHeight);
+		dc.vSVG.setAttributeNS(null, "preserveAspectRatio", "none");
 		
+		bbgrect=document.createElementNS(static_xmlns,"rect");
+	    dc.vSVG.appendChild(bbgrect);
+		bbgrect.setAttributeNS(null, "fill", "green");
+		bbgrect.setAttributeNS(null, "x", 0);
+		bbgrect.setAttributeNS(null, "y", 0);
+		bbgrect.setAttributeNS(null, "width", vWidth);
+		bbgrect.setAttributeNS(null, "height", vHeight);
+		bbgrect.setAttributeNS(null, "fill-opacity", .1);
 
-		dc.svgelmt.setAttributeNS(null, "width", iwidth);
-		dc.svgelmt.setAttributeNS(null, "height", iheight);
+		dc.svgCanvasDiv.appendChild(dc.vSVG);
+		dc.vSVG.appendChild(dc.spectSVG);
+		dc.spectSVG.setAttributeNS(null, "width", realWidth);
+		dc.spectSVG.setAttributeNS(null, "height", realHeight);
+		dc.vSVG.setAttributeNS(null, "viewBox", 0  + " " + 0 + " " + realWidth + " " + realHeight);
+		//dc.vSVG.setAttributeNS(null, "vector-effect", "non-scaling-stroke");
+		//dc.spectSVG.setAttributeNS(null, "x", 50);
+		//dc.spectSVG.setAttributeNS(null, "y", 50);
+
+
 		// so we can scale in whatever dimension we want later.
-		dc.svgelmt.setAttributeNS(null, "preserveAspectRatio", "none");
+		dc.spectSVG.setAttributeNS(null, "preserveAspectRatio", "none");
+		//dc.spectSVG.setAttributeNS(null, "vector-effect", "non-scaling-stroke");
+		//dc.spectSVG.setAttributeNS(null, "viewPort", 0  + " " + 0 + " " + vWidth + " " + vHeight);
 
 
-		var svgCanvasWidth=dc.svgelmt.width.baseVal.value;
-		var svgCanvasHeight=dc.svgelmt.height.baseVal.value;
+		var g = document.createElementNS(static_xmlns, "g");
+		g.setAttribute('id', 'group');
+		g.setAttribute('shape-rendering', 'inherit');
+		//g.setAttributeNS(null, "vector-effect", "non-scaling-stroke");
+		dc.spectSVG.appendChild(g);
+		g.setAttributeNS(null, "preserveAspectRatio", "none");
+
 
 		bgrect=document.createElementNS(static_xmlns,"rect");
-	    dc.svgelmt.appendChild(bgrect);
-		bgrect.setAttributeNS(null, "fill", "none");
+	    g.appendChild(bgrect);
+		bgrect.setAttributeNS(null, "fill", "blue");
+		bgrect.setAttributeNS(null, "stroke" , "red");
+		bgrect.setAttributeNS(null, "stroke-width" , 0);
 		bgrect.setAttributeNS(null, "x", 0);
 		bgrect.setAttributeNS(null, "y", 0);
-		bgrect.setAttributeNS(null, "width", svgCanvasWidth);
-		bgrect.setAttributeNS(null, "height", svgCanvasHeight);
-		bgrect.setAttributeNS(null, "fill-opacity", .5);
+		bgrect.setAttributeNS(null, "width", "100%");
+		bgrect.setAttributeNS(null, "height", "100%");
+		bgrect.setAttributeNS(null, "fill-opacity", .1);
+
+		
 
 
 
@@ -52,11 +90,11 @@ function(utils){
 		var svgPath;
 
 
-	    dc.svgelmt.addEventListener("mousedown", function(e){
-	    	console.log("black mouse down!!!!!!!!!!")
-	    	pathString = "M " + e.offsetX/dc.viewScaleW + "," + (dc.viewShiftH + e.offsetY/dc.viewScaleH) + " "
+	    dc.spectSVG.addEventListener("mousedown", function(e){
+
+	    	pathString = "M " + (dc.viewShiftW + dc.pixelScaleW(e.offsetX)) + "," + (dc.viewShiftH + dc.pixelScaleH(e.offsetY)) + " "
 	       	svgPath = document.createElementNS(static_xmlns, "path");
-	       	dc.svgelmt.appendChild(svgPath);
+	       	g.appendChild(svgPath);
 	       	svgPath.setAttributeNS(null, "stroke", dc.strokeStyle);
 	       	svgPath.setAttributeNS(null, "stroke-width", 1);
 	       	svgPath.setAttributeNS(null, "fill", "none");
@@ -66,37 +104,37 @@ function(utils){
 
 	    });
 
-	    dc.svgelmt.addEventListener("mousemove", function(e){
+	    dc.spectSVG.addEventListener("mousemove", function(e){
 	    	if (mousePushed){
-	    		console.log("mouse move!")
-		    	pathString += "L " + e.offsetX/dc.viewScaleW + "," + (dc.viewShiftH + e.offsetY/dc.viewScaleH) + " ";
+	      		pathString += "L " +  (dc.viewShiftW + dc.pixelScaleW(e.offsetX)) + "," + (dc.viewShiftH + dc.pixelScaleH(e.offsetY)) + " ";
 		    	svgPath.setAttributeNS(null, "d", pathString);
-		    	//console.log("pathString is " + pathString);
 		    }
 	    });
 
-	    dc.svgelmt.addEventListener("mouseup", function(e){
-	    	console.log("mouseup!!!!!!!!!!!!")
-	    	pathString += "L " + e.offsetX/dc.viewScaleW + "," + (dc.viewShiftH + e.offsetY/dc.viewScaleH) + " ";
+	    dc.spectSVG.addEventListener("mouseup", function(e){
+	    	pathString += "L " +  (dc.viewShiftW + dc.pixelScaleW(e.offsetX)) + "," + (dc.viewShiftH + dc.pixelScaleH(e.offsetY)) + " ";
 	    	svgPath.setAttributeNS(null, "d", pathString);
 	    	mousePushed=false;
 	    });
 
-	    dc.scale = function(ws, hs){
-	    	var bbw = dc.svgelmt.getBBox().width;
-	    	var bbh = dc.svgelmt.getBBox().height
-	    	ws = ws || 1;
-	    	hs = hs || 1;
-	    	dc.viewScaleW = ws;
-	    	dc.viewScaleH = hs;
-	    	dc.viewShiftH = bbh-bbh/hs;  // when we scale vertically, we also shift because of the upuside down coords. 
+	    dc.zoom = function(ws, hs){
+	    	dc.zoomX=ws;
+	    	dc.zoomY=hs;
 
-	    	dc.svgelmt.setAttributeNS(null, "viewBox", 0  + " " + dc.viewShiftH + " " + bbw/ws + " " + bbh/hs);
+	    	console.log("will scale vertically by " + dc.zoomY);
+	    	// The shift changes with the zoom because of the upsidedown coords
+	    	dc.viewShiftH = realHeight-realHeight/dc.zoomY;  // when we scale vertically, we also shift because of the upuside down coords. 
 
+	    	dc.vSVG.setAttributeNS(null, "viewBox", dc.viewShiftW  + " " + dc.viewShiftH + " " + realWidth/dc.zoomX + " " + realHeight/dc.zoomY);
+
+			//dc.spectSVG.setAttributeNS(null, "transform", "scale(" + dc.zoomX + ")");
+
+	    	console.log("viewbox = " + dc.viewShiftW + ", " +  dc.viewShiftH + ", " + realWidth/dc.zoomX + ", " + realHeight/dc.zoomY);
 	    }
 
-
-	    dc.svgCanvasDiv.appendChild(dc.svgelmt);
+	    dc.setDrawOpacity=function(val){
+	    	bgrect.setAttributeNS(null, "fill-opacity", val);
+	    }
 
 		return dc;
 	}

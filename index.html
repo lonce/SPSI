@@ -3,6 +3,7 @@
 	<head>
 		<title>SPSI Test</title>
 		<link rel="stylesheet" type="text/css" href="css/appstyle.css">
+		<link rel="stylesheet" type="text/css" href="css/loading.css">
 		<script type="text/javascript" data-main="appscripts/main.js" src="jslibs/require.js"></script>
 	</head>
 	
@@ -17,27 +18,30 @@
 		Spectrogram (magnitude)<br>
 		<!-- Spectrogram ------------------------------------ -->
 		<canvas id="spectCanvasID" width="800" height="1025"></canvas><br>
-		<input type="button" id="SPSIButt" value="Create SPSI sig"></input><br><br>
+		<input type="button" id="Spect2SPSIButt" value="Spectogram 2 SPSI sig"></input><br><br>
 		<!--  Drawing Canvas --------------------------------- -->
 		<h4> Draw on this canvas: </h4>
 		<div id="svgCanvasDiv">
 			<!-- This is the HTML 5 canvas on the "bottom" -->
 			<canvas id="drawCanvas1ID" class="drawingCanvas" width="800" height="256"></canvas> 
-			<input type="range" id="vScaleSlider" class="vslider" min="1" max="5" step=".1" value="1" />
-			<input type="range" id="hScaleSlider"  min="1" max="5" step=".1" value="1" />
+			<input type="range" id="vZoomSlider" class="vslider" min="1" max="5" step=".05" value="1" />
+			<input type="range" id="hZoomSlider"  min="1" max="5" step=".05" value="1" />
 			<div id="imgControls">
 				Controls<br>
-				<input type="button" id="copySpectButt" value="Copy Spectrogram"></input><br><br><br>
-				vertical scale
-				<input type="text" id="vScaleText" value="1"><br>
-				horizontal scale
-				<input type="text" id="hScaleText" value="1"><br>
+				<input type="button" id="copySpectButt" value="Copy Spectrogram"></input><br>
+				Hide Sprectrogram
+				<input type="range" id="hideSpectBackground" min="0" max="1" step=".05" value="0">
+				<br><br>
+				vertical zoom
+				<input type="text" id="vZoomText" value="1"><br>
+				horizontal zoom
+				<input type="text" id="hZoomText" value="1"><br>
 			</div>
 			<br>	
 		</div>
 
 		<input type="button" id="clearDrawingButtID" value="Clear">   
-		<input type="button" id="scaleConvertID" value="Create SPSI sig"><br>
+		<input type="button" id="draw2SPSIButt" value="Drawing 2 SPSI sig"><br>
 
 		<!-- Hidden canvas ------------------------------------------ -->
 		<!-- for optional viewing of full-res matrix -->

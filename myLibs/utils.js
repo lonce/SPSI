@@ -81,7 +81,7 @@ define(
 
 		// use canvas coords to sample (4-way interpolations) from m
 		// m is thus the "source" we sample from, and canvas is the dest where the sampled values will go
-		utils.plot2D = function(source, maxval, destination){
+		utils.plot2D = function(source, maxval, destination, cb){
 			var time = Date.now();
 
 			if ((!source) || (source.length<=0)) return;
@@ -124,7 +124,7 @@ define(
 			}
 
 			console.log("plot2D took " + (Date.now()-time) + " milliseconds");
-
+			cb && cb();
 		}
 
 		//https://en.wikipedia.org/wiki/Grayscale
@@ -173,11 +173,12 @@ define(
 			// Scale svg to fit desination size
 			svgObj.setAttribute("width", destination.length);
 			svgObj.setAttribute("height", destination[0].length);
-			svgObj.setAttributeNS(null, "viewBox", "0 0 " + isvgObj.clientWidth + " " + isvgObj.clientHeight);
+			console.log("svg2Matrix, setting viewbox width to  " + isvgObj.width.baseVal.value + ", and viewbox Hight to " + isvgObj.height.baseVal.value);
+			svgObj.setAttributeNS(null, "viewBox", "0 0 " + isvgObj.width.baseVal.value + " " + isvgObj.height.baseVal.value);
 			svgObj.setAttributeNS(null, "preserveAspectRatio", "none");
 
 
-			isvgObj.setAttributeNS(null, "transform", "scale(" + destination.length/isvgObj.clientWidth + " " + destination[0].length/isvgObj.clientHeight +")");
+			isvgObj.setAttributeNS(null, "transform", "scale(" + destination.length/isvgObj.getAttribute("width") + " " + destination[0].length/isvgObj.getAttribute("height") +")");
 
 
 

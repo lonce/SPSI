@@ -3,6 +3,8 @@ require(
 	["../myLibs/utils", "../myLibs/dnd", "snd", "../myLibs/drawingCanvas", "../myLibs/svgDrawingCanvas",  "../myLibs/SpectrogramInverter", "../myLibs/audioDisplayFactorySVG", "../myLibs/fft"],
 
 	function (utils, dnd, sound, drawingCanvas, svgDrawingCanvas, SpectrogramInverter, audioDisplayFactory) {
+
+
 		// Opens a canvas to show the full-resolution spectrogram of the drawing
 		var displayHighResFlag = false;
 		var loadTestSigFlag = false;
@@ -51,6 +53,7 @@ require(
 			spsiDisplay.clear();
 			utils.clear(spectCanvas);
 
+			
 			computeSonogram();
 
 		});
@@ -112,10 +115,10 @@ require(
 
 */
 		//=----------------------------------------------------
-		var svgDC=svgDrawingCanvas("svgCanvasDiv", 800, 256);
+		var svgDC=svgDrawingCanvas("svgCanvasDiv", 800, 256, 460,1025);
 		var dc2=drawingCanvas("drawCanvas2ID");
 
-		var convertButt = document.getElementById("scaleConvertID");
+		var convertButt = document.getElementById("draw2SPSIButt");
 
 		for (var i=0;i<460;i++){
 			matrix[i]=new Array(windowLength/2+1).fill(0);
@@ -123,7 +126,7 @@ require(
 
 
 		convertButt.addEventListener("click", function(){
-			utils.svg2Matrix(svgDC.svgelmt, matrix, function(){
+			utils.svg2Matrix(svgDC.spectSVG, matrix, function(){
 
 				if (displayHighResFlag){
 					dc2.dCanvas.hidden=false;
@@ -137,28 +140,35 @@ require(
 			});
 		});
 
-		var vScaleSlider = document.getElementById("vScaleSlider");
-		vScaleSlider.addEventListener("input", function(){
-			document.getElementById("vScaleText").value=vScaleSlider.value;
-			svgDC.scale(hScaleSlider.value, vScaleSlider.value);
-			dc1.scale(hScaleSlider.value, vScaleSlider.value);
+		var vZoomSlider = document.getElementById("vZoomSlider");
+		vZoomSlider.addEventListener("input", function(){
+			document.getElementById("vZoomText").value=vZoomSlider.value;
+			svgDC.zoom(hZoomSlider.value, vZoomSlider.value);
+			dc1.zoom(hZoomSlider.value, vZoomSlider.value);
 		});
 
-		var hScaleSlider = document.getElementById("hScaleSlider");
-		hScaleSlider.addEventListener("input", function(){
-			document.getElementById("hScaleText").value=hScaleSlider.value;
-			svgDC.scale(hScaleSlider.value, vScaleSlider.value);
-			dc1.scale(hScaleSlider.value, vScaleSlider.value);
+		var hZoomSlider = document.getElementById("hZoomSlider");
+		hZoomSlider.addEventListener("input", function(){
+			document.getElementById("hZoomText").value=hZoomSlider.value;
+			svgDC.zoom(hZoomSlider.value, vZoomSlider.value);
+			dc1.zoom(hZoomSlider.value, vZoomSlider.value);
 		});
 
 		var copySpectButt = document.getElementById("copySpectButt");
 			copySpectButt.addEventListener('click', function(){
+
 			dc1.setImage(spectCanvas.toDataURL());
+			svgDC.zoom(hZoomSlider.value, vZoomSlider.value);
+			dc1.zoom(hZoomSlider.value, vZoomSlider.value);
+
+
 
 		});
 		//----------------------------------------------------
 		function computeSonogram()
 		{
+
+
 			var frameStartIndex=0;
 			var frameNum=0;
 
@@ -216,7 +226,11 @@ require(
 
 			// Plot the soundSpectrogram
 			//utils.plot(soundSpectrogram, slicePlotWidth, binPlotHeight, maxSpectrogramVal, spectCanvas, spectDisplayShift);//3*slicePlotWidth/2);
+
+
+			console.log("working .......");
 			utils.plot2D(soundSpectrogram, maxSpectrogramVal, spectCanvas);//3*slicePlotWidth/2);			
+			
 		}
 
 		// Called on button push
@@ -288,14 +302,19 @@ require(
 		// set up button listeners
 		spsiDisplay.clear();
 		utils.clear(spectCanvas);
-		computeSonogram();
+		//computeSonogram();
 		document.getElementById("clearDrawingButtID").addEventListener('click', function(){
 				if (svgDC) {svgDC.clear()};
 				if (dc1) {dc1.clear()};
 				if (dc2) {dc2.clear()};
 		});
-		document.getElementById("SPSIButt").addEventListener('click', function(){
-			onReconstruct(soundSpectrogram);
+		document.getElementById("Spect2SPSIButt").addEventListener('click', 
+			function(){
+				onReconstruct(soundSpectrogram);
+		});
+
+		document.getElementById("hideSpectBackground").addEventListener('input', function(){
+			svgDC.setDrawOpacity(this.value);
 		});
 
 	}

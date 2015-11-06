@@ -123,7 +123,7 @@ function(utils){
 
 		}
 
-		dc.scale = function(ws, hs){
+		dc.zoom = function(ws, hs){
 	    	var bbw = dc.imgData.width;
 	    	var bbh = dc.imgData.height
 	    	ws = ws || 1;
