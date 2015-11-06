@@ -14,6 +14,7 @@ function(utils){
 			spectSVG  : document.createElementNS("http://www.w3.org/2000/svg", "svg"),
 			strokeStyle :  "#FFFFFF",
 			lineWidth : 1,
+			lineBoxWidth : 12, // zero means just draw a path, otherwise draw a closed contour with forward and return paths
 			hCanvas : null,
 
 			zoomX  : 1, // the portion of the image in the view
@@ -87,17 +88,28 @@ function(utils){
 		var mousePushed = false;
 
 		var pathString;
+		var forwardPathString;
+		var returnPathString;
+
 		var svgPath;
 
+    	var mposX; //temporary
+    	var mposY; // temporary
 
 	    dc.spectSVG.addEventListener("mousedown", function(e){
 
-	    	pathString = "M " + (dc.viewShiftW + dc.pixelScaleW(e.offsetX)) + "," + (dc.viewShiftH + dc.pixelScaleH(e.offsetY)) + " "
+	    	mposX = (dc.viewShiftW + dc.pixelScaleW(e.offsetX));
+	    	mposY = (dc.viewShiftH + dc.pixelScaleH(e.offsetY));
+
+	    	forwardPathString = "M " + mposX + "," + (mposY+dc.lineBoxWidth/2) + " "; 
+	    	returnPathString = mposX + "," + (mposY-dc.lineBoxWidth/2) + " ";
+	    	pathString = forwardPathString + returnPathString + " Z";
+
 	       	svgPath = document.createElementNS(static_xmlns, "path");
 	       	g.appendChild(svgPath);
 	       	svgPath.setAttributeNS(null, "stroke", dc.strokeStyle);
-	       	svgPath.setAttributeNS(null, "stroke-width", 1);
-	       	svgPath.setAttributeNS(null, "fill", "none");
+	       	svgPath.setAttributeNS(null, "stroke-width", dc.lineWidth);
+	       	svgPath.setAttributeNS(null, "fill", "white");
 	       	svgPath.setAttributeNS(null, "d", pathString);
 
 	    	mousePushed=true;
@@ -106,13 +118,28 @@ function(utils){
 
 	    dc.spectSVG.addEventListener("mousemove", function(e){
 	    	if (mousePushed){
-	      		pathString += "L " +  (dc.viewShiftW + dc.pixelScaleW(e.offsetX)) + "," + (dc.viewShiftH + dc.pixelScaleH(e.offsetY)) + " ";
+
+	    		mposX = (dc.viewShiftW + dc.pixelScaleW(e.offsetX));
+	    		mposY = (dc.viewShiftH + dc.pixelScaleH(e.offsetY));
+
+
+	      		forwardPathString += "L " +  mposX + "," + (mposY+dc.lineBoxWidth/2) + " ";
+	    		returnPathString   = "L " +  mposX + "," + (mposY-dc.lineBoxWidth/2) + " " + returnPathString;
+	    		pathString = forwardPathString + returnPathString + " Z";
+
 		    	svgPath.setAttributeNS(null, "d", pathString);
 		    }
 	    });
 
 	    dc.spectSVG.addEventListener("mouseup", function(e){
-	    	pathString += "L " +  (dc.viewShiftW + dc.pixelScaleW(e.offsetX)) + "," + (dc.viewShiftH + dc.pixelScaleH(e.offsetY)) + " ";
+    		mposX = (dc.viewShiftW + dc.pixelScaleW(e.offsetX));
+    		mposY = (dc.viewShiftH + dc.pixelScaleH(e.offsetY));
+
+
+      		forwardPathString += "L " +  mposX + "," + (mposY+dc.lineBoxWidth/2) + " ";
+    		returnPathString   = "L " +  mposX + "," + (mposY-dc.lineBoxWidth/2) + " " + returnPathString;
+    		pathString = forwardPathString + returnPathString + " Z";
+
 	    	svgPath.setAttributeNS(null, "d", pathString);
 	    	mousePushed=false;
 	    });
