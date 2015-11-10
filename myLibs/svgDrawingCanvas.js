@@ -3,6 +3,7 @@ define(
 function(utils){
 	// The svg namespace
 	var static_xmlns = "http://www.w3.org/2000/svg";
+	var xlinkns = "http://www.w3.org/1999/xlink";
 
 	// canvasDiv is where the svg element will be placed (absolute 0,0)
 	// vWidth and vHeight are for viewing, realWidth and realHeight are the real size we draw upon
@@ -10,11 +11,13 @@ function(utils){
 		// The object returned by this factory method
 		var dc={
 			svgCanvasDiv : document.getElementById(id),
-			vSVG : document.createElementNS("http://www.w3.org/2000/svg", "svg"),
-			spectSVG  : document.createElementNS("http://www.w3.org/2000/svg", "svg"),
+			vSVG : document.createElementNS(static_xmlns, "svg"), // smaller, for viewing
+			spectSVG  : document.createElementNS(static_xmlns, "svg"), // larger resolution, for spectrum
 			strokeStyle :  "#FFFFFF",
 			lineWidth : 1,
-			lineBoxWidth : 12, // zero means just draw a path, otherwise draw a closed contour with forward and return paths
+			lineBoxWidth : 500, // zero means just draw a path, otherwise draw a closed contour with forward and return paths
+			pathFill : "white",
+			pattern : "",
 			hCanvas : null,
 
 			zoomX  : 1, // the portion of the image in the view
@@ -29,6 +32,35 @@ function(utils){
 			viewShiftH : 0,
 			clear : function () { var c = dc.spectSVG; while (c.firstChild) { c.removeChild(c.firstChild); }}
 		};
+
+		// See snippets
+		dc.setFill = function(img){
+			// defs ---------------------------------------------------------
+			dc.defs = document.createElementNS(static_xmlns, "defs");
+			dc.spectSVG.appendChild(dc.defs);
+
+			// pattern -------------------------------------------------------
+			dc.pattern = document.createElementNS(static_xmlns, "pattern");
+			dc.pattern.setAttributeNS(null, 'id', "pattern");
+			dc.pattern.setAttributeNS(null, 'width', realWidth);
+			dc.pattern.setAttributeNS(null, 'height', realHeight);
+			dc.pattern.setAttributeNS(null, 'patternUnits', "userSpaceOnUse");
+			dc.defs.appendChild(dc.pattern);
+
+			// image ---------------------------------------------------------
+			dc.image = document.createElementNS(static_xmlns, "image");
+		dc.image.setAttributeNS(null, 'x', "0");
+		dc.image.setAttributeNS(null, 'y', "0");
+		dc.image.setAttributeNS(null, 'width', realWidth);
+		dc.image.setAttributeNS(null, 'height', realHeight);
+		//dc.image.setAttributeNS( xlinkns, "href", "http://vignette4.wikia.nocookie.net/mlp/images/2/2a/FANMADE_Trixie_icon.png" );
+		dc.image.setAttributeNS( xlinkns, "href", img );
+			dc.pattern.appendChild(dc.image);
+
+			dc.pathFill="url(#pattern)";
+
+
+		}
 
 		dc.vSVG.id="isvgObj";
 		dc.vSVG.style.position = "absolute";
@@ -46,11 +78,16 @@ function(utils){
 		bbgrect.setAttributeNS(null, "height", vHeight);
 		bbgrect.setAttributeNS(null, "fill-opacity", .1);
 
-		dc.svgCanvasDiv.appendChild(dc.vSVG);
-		dc.vSVG.appendChild(dc.spectSVG);
+
+		dc.spectSVG.setAttributeNS(null, "xlink", xlinkns);
 		dc.spectSVG.setAttributeNS(null, "width", realWidth);
 		dc.spectSVG.setAttributeNS(null, "height", realHeight);
+
+		dc.vSVG.appendChild(dc.spectSVG);
 		dc.vSVG.setAttributeNS(null, "viewBox", 0  + " " + 0 + " " + realWidth + " " + realHeight);
+		dc.svgCanvasDiv.appendChild(dc.vSVG);
+
+
 		//dc.vSVG.setAttributeNS(null, "vector-effect", "non-scaling-stroke");
 		//dc.spectSVG.setAttributeNS(null, "x", 50);
 		//dc.spectSVG.setAttributeNS(null, "y", 50);
@@ -109,7 +146,7 @@ function(utils){
 	       	g.appendChild(svgPath);
 	       	svgPath.setAttributeNS(null, "stroke", dc.strokeStyle);
 	       	svgPath.setAttributeNS(null, "stroke-width", dc.lineWidth);
-	       	svgPath.setAttributeNS(null, "fill", "white");
+	       	svgPath.setAttributeNS(null, "fill", dc.pathFill);
 	       	svgPath.setAttributeNS(null, "d", pathString);
 
 	    	mousePushed=true;

@@ -156,12 +156,12 @@ require(
 
 		var copySpectButt = document.getElementById("copySpectButt");
 			copySpectButt.addEventListener('click', function(){
+				var dataURL = spectCanvas.toDataURL();
 
-			dc1.setImage(spectCanvas.toDataURL());
-			svgDC.zoom(hZoomSlider.value, vZoomSlider.value);
-			dc1.zoom(hZoomSlider.value, vZoomSlider.value);
-
-
+				dc1.setImage(spectCanvas.toDataURL(dataURL));
+				svgDC.zoom(hZoomSlider.value, vZoomSlider.value);
+				dc1.zoom(hZoomSlider.value, vZoomSlider.value);
+				svgDC.setFill(dataURL);
 
 		});
 		//----------------------------------------------------
