@@ -1,13 +1,13 @@
 
 require(
-	["../myLibs/utils", "../myLibs/dnd", "snd", "../myLibs/drawingCanvas", "../myLibs/svgDrawingCanvas",  "../myLibs/SpectrogramInverter", "../myLibs/audioDisplayFactorySVG", "../myLibs/fft"],
+	["../myLibs/fileSaverWrapper", "../myLibs/utils",   "../myLibs/dnd", "snd", "../myLibs/drawingCanvas", "../myLibs/svgDrawingCanvas",  "../myLibs/SpectrogramInverter", "../myLibs/audioDisplayFactorySVG", "../myLibs/fft"],
 
-	function (utils, dnd, sound, drawingCanvas, svgDrawingCanvas, SpectrogramInverter, audioDisplayFactory) {
+	function (fswrapper, utils, dnd, sound, drawingCanvas, svgDrawingCanvas, SpectrogramInverter, audioDisplayFactory) {
 
 
 		// Opens a canvas to show the full-resolution spectrogram of the drawing
-		var displayHighResFlag = false;
-		var loadTestSigFlag = false;
+		var displayHighResFlag = true;
+		var loadTestSigFlag = true;
 
 		var spectCanvas=document.getElementById("spectCanvasID");
 		utils.clear(spectCanvas);
@@ -33,15 +33,25 @@ require(
 
 		if (loadTestSigFlag){
 			// test signal:      makeTone(f, sr, len)
-			sig=utils.makeTone(sr/32, sr, 2*windowLength)  
-					.concat(utils.makeTone(sr/8, sr, 2*windowLength))
-					.concat(utils.makeTone(sr/16, sr, 2*windowLength))
-					.concat(utils.makeTone(sr/4, sr, 2*windowLength)); 
+			
+			sig=utils.makeTone(sr/32, sr, 20*windowLength)  
+					.concat(utils.makeTone(sr/8, sr, 20*windowLength))
+					.concat(utils.makeTone(sr/16, sr, 20*windowLength))
+					.concat(utils.makeTone(sr/4, sr, 20*windowLength)); 
+					
+			//sig=utils.makeTone(sr/50, sr, 235754)  
+
 
 			// Display audio input signal
-			inputDisplay.show(sig);
 			inSnd = sound();
+			inputDisplay.show(sig);
 			inSnd.farray2Buf(sig);
+
+			
+			spsiDisplay.clear();
+			utils.clear(spectCanvas);			
+			computeSonogram();
+		
 		}
 
 		// Drag and drop action
@@ -155,13 +165,24 @@ require(
 		});
 
 		var copySpectButt = document.getElementById("copySpectButt");
-			copySpectButt.addEventListener('click', function(){
-				var dataURL = spectCanvas.toDataURL();
+		copySpectButt.addEventListener('click', function(){
+			var dataURL = spectCanvas.toDataURL();
 
-				dc1.setImage(spectCanvas.toDataURL(dataURL));
-				svgDC.zoom(hZoomSlider.value, vZoomSlider.value);
-				dc1.zoom(hZoomSlider.value, vZoomSlider.value);
-				svgDC.setFill(dataURL);
+			dc1.setImage(dataURL);
+			svgDC.setFill(dataURL);
+
+			svgDC.zoom(hZoomSlider.value, vZoomSlider.value);
+			dc1.zoom(hZoomSlider.value, vZoomSlider.value);
+
+		});
+
+		var saveSpectButt = document.getElementById("saveSpectButt");
+		saveSpectButt.addEventListener('click', function(){
+			//saves as png - can use imagemagick to convert to black and white at the shell
+			spectCanvas.toBlob(function(blob){
+				fswrapper(blob);
+			})
+			
 
 		});
 		//----------------------------------------------------
@@ -195,6 +216,10 @@ require(
 			var specIm = new Array(windowLength/2+1);
 			
 			var maxSpectrogramVal=0;// = Math.max(...specMag); // The spread operater in ECMAScript6
+			var maxFrameSpectVal=0;
+
+			var maxSpectValArray=[];
+
 			var specMag;
 
 			var hannWindow=utils.hannArray(windowLength);
@@ -216,6 +241,9 @@ require(
 				
 				// Compute magnitude spectrum
 				specMag = utils.mag(specRe, specIm);
+				maxFrameSpectVal = Math.max(...specMag); // just for debugging
+				maxSpectValArray.push(maxFrameSpectVal); //just for debugging
+				
 				maxSpectrogramVal = Math.max(maxSpectrogramVal, Math.max(...specMag)); // The spread operater in ECMAScript6
 
 				soundSpectrogram[frameNum]=specMag;
@@ -223,14 +251,19 @@ require(
 				frameNum++;
 				frameStartIndex+= stepSize;
 			}
-
+			
+			console.log("Max spectral value is " + maxSpectrogramVal);
+			console.log("Min Max spectral value is " + Math.min(...maxSpectValArray) );
 			// Plot the soundSpectrogram
 			//utils.plot(soundSpectrogram, slicePlotWidth, binPlotHeight, maxSpectrogramVal, spectCanvas, spectDisplayShift);//3*slicePlotWidth/2);
 
 
 			console.log("working .......");
+			//working.loading("loading", function(){
+				//console.log("about to call utils.plot2d");
 			utils.plot2D(soundSpectrogram, maxSpectrogramVal, spectCanvas);//3*slicePlotWidth/2);			
-			
+			//});
+			//working.done();
 		}
 
 		// Called on button push
@@ -301,11 +334,11 @@ require(
 
 		// set up button listeners
 		spsiDisplay.clear();
-		utils.clear(spectCanvas);
+		//utils.clear(spectCanvas);
 		//computeSonogram();
 		document.getElementById("clearDrawingButtID").addEventListener('click', function(){
 				if (svgDC) {svgDC.clear()};
-				if (dc1) {dc1.clear()};
+				//if (dc1) {dc1.clear()};
 				if (dc2) {dc2.clear()};
 		});
 		document.getElementById("Spect2SPSIButt").addEventListener('click', 

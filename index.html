@@ -18,13 +18,16 @@
 		Spectrogram (magnitude)<br>
 		<!-- Spectrogram ------------------------------------ -->
 		<canvas id="spectCanvasID" width="800" height="1025"></canvas><br>
-		<input type="button" id="Spect2SPSIButt" value="Spectogram 2 SPSI sig"></input><br><br>
+		<input type="button" id="Spect2SPSIButt" value="Spectogram 2 SPSI sig"></input>
+		<input type="button" id="saveSpectButt" value="Save Spect as PNG"></input>
+
+		<br><br>
 		<!--  Drawing Canvas --------------------------------- -->
 		<h4> Draw on this canvas: </h4>
 		<div id="svgCanvasDiv">
 			<!-- This is the HTML 5 canvas on the "bottom" -->
 			<canvas id="drawCanvas1ID" class="drawingCanvas" width="800" height="256"></canvas> 
-			<input type="range" id="vZoomSlider" class="vslider" min="1" max="5" step=".05" value="1" />
+			<input type="range" id="vZoomSlider" class="vslider" min="1" max="8" step=".05" value="1" />
 			<input type="range" id="hZoomSlider"  min="1" max="5" step=".05" value="1" />
 			<div id="imgControls">
 				Controls<br>

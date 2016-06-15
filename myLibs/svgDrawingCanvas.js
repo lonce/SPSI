@@ -14,9 +14,10 @@ function(utils){
 			vSVG : document.createElementNS(static_xmlns, "svg"), // smaller, for viewing
 			spectSVG  : document.createElementNS(static_xmlns, "svg"), // larger resolution, for spectrum
 			strokeStyle :  "#FFFFFF",
-			lineWidth : 1,
+			lineWidth : 0,
 			lineBoxWidth : 500, // zero means just draw a path, otherwise draw a closed contour with forward and return paths
-			pathFill : "white",
+			pathFill : "pink",
+			pathOpacity: ".5",
 			pattern : "",
 			hCanvas : null,
 
@@ -24,14 +25,22 @@ function(utils){
 			zoomY : 1,
 			viewRatioW : vWidth/realWidth, //scale means relative to realHeight and Width
 			viewRatioH : vHeight/realHeight,
-			pixelScaleW : function(p){return (p/(dc.zoomX*dc.viewRatioW));},
-			pixelScaleH : function(p){return (p/(dc.zoomY*dc.viewRatioH));},
+			pixelShiftScaleX : function(p){return (dc.viewShiftW +p/(dc.zoomX*dc.viewRatioW));},
+			pixelShiftScaleY : function(p){return (dc.viewShiftH + p/(dc.zoomY*dc.viewRatioH));},
 
 
 			viewShiftW : 0,
 			viewShiftH : 0,
-			clear : function () { var c = dc.spectSVG; while (c.firstChild) { c.removeChild(c.firstChild); }}
+			clear : function () { 
+				var c = dc.spectSVG;
+				var g = document.getElementById("drawGroup");
+				c.removeChild(g);
+				drawGroup=createDrawingSurface();
+				dc.spectSVG.appendChild(drawGroup);
+			}
 		};
+
+		var drawOpacity=.1;
 
 		// See snippets
 		dc.setFill = function(img){
@@ -42,22 +51,40 @@ function(utils){
 			// pattern -------------------------------------------------------
 			dc.pattern = document.createElementNS(static_xmlns, "pattern");
 			dc.pattern.setAttributeNS(null, 'id', "pattern");
+			dc.pattern.setAttributeNS(null, 'x', "0");
+			dc.pattern.setAttributeNS(null, 'y', "0");
 			dc.pattern.setAttributeNS(null, 'width', realWidth);
 			dc.pattern.setAttributeNS(null, 'height', realHeight);
 			dc.pattern.setAttributeNS(null, 'patternUnits', "userSpaceOnUse");
+			dc.pattern.setAttributeNS(null, 'preserveAspectRatio', "none");
+			//dc.pattern.setAttributeNS(null, "viewBox", 0  + " " + 0 + " " + realWidth + " " + realHeight);
+
 			dc.defs.appendChild(dc.pattern);
 
 			// image ---------------------------------------------------------
 			dc.image = document.createElementNS(static_xmlns, "image");
-		dc.image.setAttributeNS(null, 'x', "0");
-		dc.image.setAttributeNS(null, 'y', "0");
-		dc.image.setAttributeNS(null, 'width', realWidth);
-		dc.image.setAttributeNS(null, 'height', realHeight);
-		//dc.image.setAttributeNS( xlinkns, "href", "http://vignette4.wikia.nocookie.net/mlp/images/2/2a/FANMADE_Trixie_icon.png" );
-		dc.image.setAttributeNS( xlinkns, "href", img );
-			dc.pattern.appendChild(dc.image);
+			dc.image.setAttributeNS(null, 'x', "0");
+			dc.image.setAttributeNS(null, 'y', "0");
+			dc.image.setAttributeNS(null, 'width', realWidth);
+			dc.image.setAttributeNS(null, 'height', realHeight);
+			dc.image.setAttributeNS(null, 'preserveAspectRatio', "none");  // note
+			dc.image.setAttributeNS( xlinkns, "href", img );
+			//dc.image.setAttributeNS( xlinkns, "href", "http://vignette4.wikia.nocookie.net/mlp/images/2/2a/FANMADE_Trixie_icon.png" );
 
+			// Just double check img (dataURL) dimensions
+			/*
+			var img1 = new Image;
+		    img1.onload = function() {
+		    	console.log("size of dataURL image is " + img1.width + "," + img1.height)
+		    };
+		    img1.src =img;
+			*/
+
+
+
+			dc.pattern.appendChild(dc.image);
 			dc.pathFill="url(#pattern)";
+
 
 
 		}
@@ -68,9 +95,10 @@ function(utils){
 		dc.vSVG.setAttributeNS(null, "width", vWidth);
 		dc.vSVG.setAttributeNS(null, "height", vHeight);
 		dc.vSVG.setAttributeNS(null, "preserveAspectRatio", "none");
+
+		dc.svgCanvasDiv.appendChild(dc.vSVG);
 		
 		bbgrect=document.createElementNS(static_xmlns,"rect");
-	    dc.vSVG.appendChild(bbgrect);
 		bbgrect.setAttributeNS(null, "fill", "green");
 		bbgrect.setAttributeNS(null, "x", 0);
 		bbgrect.setAttributeNS(null, "y", 0);
@@ -78,6 +106,7 @@ function(utils){
 		bbgrect.setAttributeNS(null, "height", vHeight);
 		bbgrect.setAttributeNS(null, "fill-opacity", .1);
 
+	    dc.vSVG.appendChild(bbgrect);
 
 		dc.spectSVG.setAttributeNS(null, "xlink", xlinkns);
 		dc.spectSVG.setAttributeNS(null, "width", realWidth);
@@ -85,7 +114,7 @@ function(utils){
 
 		dc.vSVG.appendChild(dc.spectSVG);
 		dc.vSVG.setAttributeNS(null, "viewBox", 0  + " " + 0 + " " + realWidth + " " + realHeight);
-		dc.svgCanvasDiv.appendChild(dc.vSVG);
+
 
 
 		//dc.vSVG.setAttributeNS(null, "vector-effect", "non-scaling-stroke");
@@ -98,31 +127,34 @@ function(utils){
 		//dc.spectSVG.setAttributeNS(null, "vector-effect", "non-scaling-stroke");
 		//dc.spectSVG.setAttributeNS(null, "viewPort", 0  + " " + 0 + " " + vWidth + " " + vHeight);
 
-
-		var g = document.createElementNS(static_xmlns, "g");
-		g.setAttribute('id', 'group');
-		g.setAttribute('shape-rendering', 'inherit');
-		//g.setAttributeNS(null, "vector-effect", "non-scaling-stroke");
-		dc.spectSVG.appendChild(g);
-		g.setAttributeNS(null, "preserveAspectRatio", "none");
-
-
-		bgrect=document.createElementNS(static_xmlns,"rect");
-	    g.appendChild(bgrect);
-		bgrect.setAttributeNS(null, "fill", "blue");
-		bgrect.setAttributeNS(null, "stroke" , "red");
-		bgrect.setAttributeNS(null, "stroke-width" , 0);
-		bgrect.setAttributeNS(null, "x", 0);
-		bgrect.setAttributeNS(null, "y", 0);
-		bgrect.setAttributeNS(null, "width", "100%");
-		bgrect.setAttributeNS(null, "height", "100%");
-		bgrect.setAttributeNS(null, "fill-opacity", .1);
-
 		
+		var createDrawingSurface = function(svgelmt){
+			drawGroup = document.createElementNS(static_xmlns, "g");
+			drawGroup.setAttribute('id', 'drawGroup');
+			drawGroup.setAttribute('shape-rendering', 'inherit');
+			//g.setAttributeNS(null, "vector-effect", "non-scaling-stroke");
+			dc.spectSVG.appendChild(drawGroup);
+			drawGroup.setAttributeNS(null, "preserveAspectRatio", "none");
 
 
+			bgrect=document.createElementNS(static_xmlns,"rect");
+			bgrect.setAttributeNS(null, "fill", "blue");
+			bgrect.setAttributeNS(null, "stroke" , "red");
+			bgrect.setAttributeNS(null, "stroke-width" , 0);
+			bgrect.setAttributeNS(null, "x", 0);
+			bgrect.setAttributeNS(null, "y", 0);
+			bgrect.setAttributeNS(null, "width", "100%");
+			bgrect.setAttributeNS(null, "height", "100%");
+			bgrect.setAttributeNS(null, "fill-opacity", drawOpacity);
 
-		var mousePushed = false;
+		    drawGroup.appendChild(bgrect);
+		    return drawGroup;
+
+		}
+		var drawGroup=createDrawingSurface();
+		dc.spectSVG.appendChild(drawGroup);
+
+		var mousePushed_drawing = false;
 
 		var pathString;
 		var forwardPathString;
@@ -135,29 +167,55 @@ function(utils){
 
 	    dc.spectSVG.addEventListener("mousedown", function(e){
 
-	    	mposX = (dc.viewShiftW + dc.pixelScaleW(e.offsetX));
-	    	mposY = (dc.viewShiftH + dc.pixelScaleH(e.offsetY));
+	    	mposX = dc.pixelShiftScaleX(e.offsetX);
+	    	mposY = dc.pixelShiftScaleY(e.offsetY);
 
 	    	forwardPathString = "M " + mposX + "," + (mposY+dc.lineBoxWidth/2) + " "; 
 	    	returnPathString = mposX + "," + (mposY-dc.lineBoxWidth/2) + " ";
 	    	pathString = forwardPathString + returnPathString + " Z";
 
 	       	svgPath = document.createElementNS(static_xmlns, "path");
-	       	g.appendChild(svgPath);
+	       	drawGroup.appendChild(svgPath);
 	       	svgPath.setAttributeNS(null, "stroke", dc.strokeStyle);
 	       	svgPath.setAttributeNS(null, "stroke-width", dc.lineWidth);
 	       	svgPath.setAttributeNS(null, "fill", dc.pathFill);
 	       	svgPath.setAttributeNS(null, "d", pathString);
+	       	svgPath.setAttributeNS(null, "transform", "matrix(1 0 0 1 0 0)");
 
-	    	mousePushed=true;
+	       	svgPath.originShiftX=0;
+	       	svgPath.originShiftY=0;
+	       	svgPath.dragPosX=0;
+	       	svgPath.dragPosY=0;
+	       	svgPath.dragging=false;
+	       	svgPath.addEventListener("mousedown", function(e){
+	       		mposX = dc.pixelShiftScaleX(e.offsetX);
+	    		mposY = dc.pixelShiftScaleY(e.offsetY);
+	       		console.log("mousedown on path object");
+	       		//e.preventDefault();
+	       		e.stopPropagation();
+	       		this.dragging=true;
+	       		console.log("setting dragpos to [" + this.dragPosX + ", " + this.dragPosY);
+	       		this.dragPosX=mposX;
+	       		this.dragPosY=mposY;
+
+	       		dc.spectSVG.dragging=this;
+	       	});
+
+
+
+
+	    	mousePushed_drawing=true;
 
 	    });
 
 	    dc.spectSVG.addEventListener("mousemove", function(e){
-	    	if (mousePushed){
 
-	    		mposX = (dc.viewShiftW + dc.pixelScaleW(e.offsetX));
-	    		mposY = (dc.viewShiftH + dc.pixelScaleH(e.offsetY));
+    		mposX = dc.pixelShiftScaleX(e.offsetX);
+    		mposY = dc.pixelShiftScaleY(e.offsetY);
+
+
+	    	if (mousePushed_drawing){
+
 
 
 	      		forwardPathString += "L " +  mposX + "," + (mposY+dc.lineBoxWidth/2) + " ";
@@ -165,20 +223,41 @@ function(utils){
 	    		pathString = forwardPathString + returnPathString + " Z";
 
 		    	svgPath.setAttributeNS(null, "d", pathString);
+		    } else if (dc.spectSVG.dragging){
+		    	var dobj = dc.spectSVG.dragging;
+
+	       		if (! dobj.dragging) return;
+
+	       		dobj.originShiftX+=(mposX-dobj.dragPosX);
+	       		dobj.originShiftY+=(mposY-dobj.dragPosY);
+	       		dobj.setAttributeNS(null, "transform", "matrix(1 0 0 1 " + dobj.originShiftX + " " +  dobj.originShiftY + ")");
+	       		console.log("setting transform matrix to " + "matrix(1 0 0 1 " + dobj.originShiftX + " " +  dobj.originShiftY + ")" );
+	       		dobj.dragPosX=mposX;
+	       		dobj.dragPosY=mposY;
+
 		    }
 	    });
 
 	    dc.spectSVG.addEventListener("mouseup", function(e){
-    		mposX = (dc.viewShiftW + dc.pixelScaleW(e.offsetX));
-    		mposY = (dc.viewShiftH + dc.pixelScaleH(e.offsetY));
+    		mposX = dc.pixelShiftScaleX(e.offsetX);
+    		mposY = dc.pixelShiftScaleY(e.offsetY);
 
+    		if (mousePushed_drawing){
 
-      		forwardPathString += "L " +  mposX + "," + (mposY+dc.lineBoxWidth/2) + " ";
-    		returnPathString   = "L " +  mposX + "," + (mposY-dc.lineBoxWidth/2) + " " + returnPathString;
-    		pathString = forwardPathString + returnPathString + " Z";
+	      		forwardPathString += "L " +  mposX + "," + (mposY+dc.lineBoxWidth/2) + " ";
+	    		returnPathString   = "L " +  mposX + "," + (mposY-dc.lineBoxWidth/2) + " " + returnPathString;
+	    		pathString = forwardPathString + returnPathString + " Z";
 
-	    	svgPath.setAttributeNS(null, "d", pathString);
-	    	mousePushed=false;
+		    	svgPath.setAttributeNS(null, "d", pathString);
+		    	mousePushed_drawing=false;
+		    } else if (dc.spectSVG.dragging){
+		    	var dobj = dc.spectSVG.dragging;
+	       		if (! dobj.dragging) return;
+	       		//e.preventDefault();
+	       		e.stopPropagation();
+				dobj.dragging=false;
+				dc.spectSVG.dragging=false;
+		    }
 	    });
 
 	    dc.zoom = function(ws, hs){
@@ -195,9 +274,11 @@ function(utils){
 
 	    	console.log("viewbox = " + dc.viewShiftW + ", " +  dc.viewShiftH + ", " + realWidth/dc.zoomX + ", " + realHeight/dc.zoomY);
 	    }
+	    
 
 	    dc.setDrawOpacity=function(val){
-	    	bgrect.setAttributeNS(null, "fill-opacity", val);
+	    	drawOpacity = val;
+	    	bgrect.setAttributeNS(null, "fill-opacity", drawOpacity);
 	    }
 
 		return dc;

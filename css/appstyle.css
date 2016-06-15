@@ -1,12 +1,18 @@
 body, html {
 	width: 100%;
 	height: 100%;	
+	-webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 
 #spectCanvasID {
 	width: 800px;  /* css rescales, doesnt set the canvas width */  
 	height: 256px; /* css rescales, doesnt set the canvas height  */ 
-	border: 1px solid #00f;
+	/* border: 1px solid #00f; */
 }
 
 #svgCanvasDiv{

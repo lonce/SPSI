@@ -6,7 +6,7 @@
     right: 0;
     background: #000;
     opacity: 0.8;
-    filter: alpha(opacity=80);
+    /* filter: alpha(opacity=80); */
 }
 #loading {
     width: 50px;

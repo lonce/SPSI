@@ -26,7 +26,7 @@ function(utils){
 			viewRatioW : vWidth/realWidth, //scale means relative to realHeight and Width
 			viewRatioH : vHeight/realHeight,
 			pixelShiftScaleX : function(p){return (dc.viewShiftW +p/(dc.zoomX*dc.viewRatioW));},
-			pixelShiftScaleY : function(p){return (dc.viewShiftH + p/(dc.zoomY*dc.viewRatioH));},
+			pixelShiftScaleY : function(p){return (dc.viewRatioH + p/(dc.zoomY*dc.viewRatioH));},
 
 
 			viewShiftW : 0,
@@ -187,6 +187,7 @@ function(utils){
 	       	svgPath.dragPosX=0;
 	       	svgPath.dragPosY=0;
 	       	svgPath.dragging=false;
+	       	
 	       	svgPath.addEventListener("mousedown", function(e){
 	       		mposX = dc.pixelShiftScaleX(e.offsetX);
 	    		mposY = dc.pixelShiftScaleY(e.offsetY);

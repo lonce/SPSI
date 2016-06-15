@@ -104,10 +104,28 @@ define(
 				var j1 = Math.floor(y);
 				var j2 = Math.ceil(y);
 				if ((! source[i1]) || (! source[i2])) {
-					console.log ( "i1 is " + i1 + ", and i2 is " + i2);
+					console.log ( "WTF: i1 is " + i1 + ", and i2 is " + i2);
 					return(0);
 
 				};
+
+				//This little hack make susre that if the mget point is smack on a grid point, that point gets weight=1
+				if (i1===i2){
+					if (i1===0) {
+						i2=i1+1;
+					} else {
+						i1=i2-1
+					}
+				}
+
+				if (j1===j2){
+					if (j1===0) {
+						j2=j1+1;
+					} else {
+						j1=j2-1
+					}
+				}
+
 				// weighted average of 4 grid points of source[][] near x,y
 				return ((j2-y)*source[i1][j1] + (y-j1)*source[i1][j2])*(i2-x) + ((j2-y)*source[i2][j1] + (y-j1)*source[i2][j2])*(x-i1);
 				//return Math.max(source[i1][j1], Math.max(source[i1][j2], Math.max(source[i2][j1], source[i2][j2])));
@@ -118,6 +136,7 @@ define(
 				for (var j=0;j<destHeight;j++){
 					sourceXfloat = utils.map(i,0,destWidth,0,sourceWidth-1);
 					sourceYfloat = utils.map(j,0,destHeight,0,sourceHeight-1);
+
 					ctx.fillStyle=utils.heatHSL(Math.sqrt(mget(sourceXfloat,sourceYfloat)),Math.sqrt(maxval));
 					ctx.fillRect(i,destHeight-1-j,1,1);
 				}
